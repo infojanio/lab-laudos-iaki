@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Droplets, Mountain, Leaf, QrCode, ShieldCheck, FlaskConical, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import logo from "@/assets/logo.avif";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -10,8 +11,9 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 glass">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
+        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: `url(${logo})`, backgroundSize: "cover", backgroundPosition: "center" }} />
           <FlaskConical className="h-7 w-7 text-primary" />
-          <span className="font-display text-xl font-bold text-primary">LabAnalytica</span>
+          <span className="font-display text-xl font-bold text-primary">LabMoura</span>
         </Link>
 
         {/* Desktop */}

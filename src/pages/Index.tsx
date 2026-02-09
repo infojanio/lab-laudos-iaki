@@ -7,9 +7,9 @@ import {
   Droplets, Mountain, Leaf, QrCode, ShieldCheck, ClipboardCheck,
   FlaskConical, Search, FileCheck, ArrowRight, Award, CheckCircle2,
 } from "lucide-react";
-import labImage1 from "@/assets/lab-1.avif";
-import labImage2 from "@/assets/lab-2.avif";
-import labImage3 from "@/assets/lab-3.avif";
+import labImage3 from "@/assets/labMoura.png";
+import labImage6 from "@/assets/doctor.jpg";
+import labImage4 from "@/assets/laboratory.avif";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -36,14 +36,14 @@ const Index = () => {
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-hero-gradient py-20 md:py-28">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `url(${labImage1})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+        <div className="absolute inset-0 opacity-9" style={{ backgroundImage: `url(${labImage4})`, backgroundSize: "cover", backgroundPosition: "center" }} />
         <div className="container relative z-10">
           <div className="max-w-2xl">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="font-display text-3xl md:text-5xl font-extrabold text-primary-foreground leading-tight"
+              className="font-display text-3xl md:text-4xl font-extrabold text-primary-foreground leading-tight"
             >
               Análises laboratoriais com confiabilidade e transparência
             </motion.h1>
@@ -53,7 +53,7 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.15 }}
               className="mt-4 text-lg text-primary-foreground/80 max-w-xl"
             >
-              Laudos digitais com validação pública via QR Code. Tecnologia a serviço da credibilidade.
+              Laudos digitais com validação pública via QR Code. 
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -67,7 +67,7 @@ const Index = () => {
                 </Button>
               </Link>
               <a href="#servicos">
-                <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                <Button size="lg" variant="outline" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold">
                   Solicitar Análise <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </a>
@@ -123,7 +123,7 @@ const Index = () => {
             </ul>
           </div>
           <div className="rounded-xl overflow-hidden shadow-lg">
-            <img src={labImage2} alt="Laboratório" className="w-full h-64 md:h-80 object-cover" />
+            <img src={labImage6} alt="Laboratório" className="w-full h-64 md:h-80 object-cover" />
           </div>
         </div>
       </section>
@@ -166,17 +166,11 @@ const Index = () => {
               <div className="flex items-start gap-3">
                 <Award className="h-5 w-5 text-secondary mt-1 shrink-0" />
                 <div>
-                  <p className="font-semibold">Dr. Carlos Mendes</p>
-                  <p className="text-sm text-muted-foreground">CRQ-SP 04123456 — Químico Responsável</p>
+                  <p className="font-semibold">Albani Moura Santos</p>
+                  <p className="text-sm text-muted-foreground">CRQ-MA 12402716 — Químico Responsável</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <Award className="h-5 w-5 text-secondary mt-1 shrink-0" />
-                <div>
-                  <p className="font-semibold">Dra. Fernanda Lima</p>
-                  <p className="text-sm text-muted-foreground">CREA-RJ 2024567890 — Engenheira Ambiental</p>
-                </div>
-              </div>
+             
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-secondary mt-1 shrink-0" />
                 <p className="text-sm text-muted-foreground">

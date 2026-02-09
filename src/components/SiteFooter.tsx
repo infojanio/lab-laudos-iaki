@@ -10,7 +10,7 @@ export function SiteFooter() {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <FlaskConical className="h-6 w-6" />
-              <span className="font-display text-lg font-bold">LabAnalytica</span>
+              <span className="font-display text-lg font-bold">LabMoura</span>
             </div>
             <p className="text-primary-foreground/70 text-sm leading-relaxed">
               Laboratório de análises com tecnologia, transparência e confiabilidade.
@@ -35,22 +35,22 @@ export function SiteFooter() {
             <ul className="space-y-3 text-sm text-primary-foreground/70">
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 shrink-0" />
-                Av. Tecnologia, 1000 - São Paulo, SP
+                Porto Franco-MA, Povoado Coité, Rua Antônio Moura, nº 42, CEP: 65970-000
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 shrink-0" />
-                (11) 3000-0000
+                (62) 99329-4573
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 shrink-0" />
-                contato@labanalytica.com
+                albani@labmoura.com.br
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-primary-foreground/20 mt-8 pt-6 text-center text-xs text-primary-foreground/50">
-          <p>© {new Date().getFullYear()} LabAnalytica — CNPJ: 00.000.000/0001-00</p>
+          <p>© {new Date().getFullYear()} LabMoura — CNPJ: 07.650.440/0001-33</p>
           <p className="mt-1">Todos os direitos reservados.</p>
         </div>
       </div>
