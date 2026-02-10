@@ -2,7 +2,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { motion } from "framer-motion";
+import { ContactSection } from "@/components/ContactSection";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
 import {
   Droplets, Mountain, Leaf, QrCode, ShieldCheck, ClipboardCheck,
   FlaskConical, Search, FileCheck, ArrowRight, Award, CheckCircle2,
@@ -10,6 +13,18 @@ import {
 import labImage3 from "@/assets/labMoura.png";
 import labImage6 from "@/assets/doctor.jpg";
 import labImage4 from "@/assets/laboratory.avif";
+import lab1 from "@/assets/lab-1.avif";
+import lab2 from "@/assets/lab-2.avif";
+import lab3 from "@/assets/lab-3.avif";
+import lab4 from "@/assets/lab-4.avif";
+
+const heroSlides = [
+  { image: labImage4, title: "Análises laboratoriais com confiabilidade e transparência", subtitle: "Laudos digitais com validação pública via QR Code." },
+  { image: lab1, title: "Qualidade da água garantida por análises precisas", subtitle: "Monitoramento completo de potabilidade e efluentes." },
+  { image: lab2, title: "Tecnologia e rigor técnico em cada amostra", subtitle: "Equipamentos modernos e equipe qualificada." },
+  { image: lab3, title: "Compromisso com o meio ambiente", subtitle: "Análises ambientais para licenciamento e sustentabilidade." },
+  { image: lab4, title: "Laudos digitais com validação instantânea", subtitle: "QR Code exclusivo para verificação pública de autenticidade." },
+];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -30,31 +45,63 @@ const steps = [
 ];
 
 const Index = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(nextSlide, 5000);
+    return () => clearInterval(timer);
+  }, [nextSlide]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
 
-      {/* HERO */}
-      <section className="relative overflow-hidden bg-hero-gradient py-20 md:py-28">
-        <div className="absolute inset-0 opacity-9" style={{ backgroundImage: `url(${labImage4})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-        <div className="container relative z-10">
+      {/* HERO WITH SLIDER */}
+      <section className="relative overflow-hidden min-h-[480px] md:min-h-[560px] flex items-center">
+        {/* Background images */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, ease: "easeInOut" }}
+            className="absolute inset-0"
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${heroSlides[currentSlide].image})` }}
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(205,75%,10%,0.85)] via-[hsl(205,75%,15%,0.75)] to-[hsl(205,75%,20%,0.6)]" />
+
+        {/* Content */}
+        <div className="container relative z-10 py-20 md:py-28">
           <div className="max-w-2xl">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="font-display text-3xl md:text-4xl font-extrabold text-primary-foreground leading-tight"
-            >
-              Análises laboratoriais com confiabilidade e transparência
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.15 }}
-              className="mt-4 text-lg text-primary-foreground/80 max-w-xl"
-            >
-              Laudos digitais com validação pública via QR Code. 
-            </motion.p>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.6 }}
+              >
+                <h1 className="font-display text-3xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-lg">
+                  {heroSlides[currentSlide].title}
+                </h1>
+                <p className="mt-4 text-lg md:text-xl text-white/90 max-w-xl drop-shadow-md">
+                  {heroSlides[currentSlide].subtitle}
+                </p>
+              </motion.div>
+            </AnimatePresence>
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -62,17 +109,31 @@ const Index = () => {
               className="mt-8 flex flex-wrap gap-4"
             >
               <Link to="/validar">
-                <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold">
+                <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold shadow-lg">
                   <QrCode className="mr-2 h-5 w-5" /> Validar Laudo
                 </Button>
               </Link>
-              <a href="#servicos">
-                <Button size="lg" variant="outline" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold">
+              <a href="#contato">
+                <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/20 font-semibold backdrop-blur-sm">
                   Solicitar Análise <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </a>
             </motion.div>
           </div>
+        </div>
+
+        {/* Slide indicators */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+          {heroSlides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentSlide(i)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === currentSlide ? "w-8 bg-white" : "w-2 bg-white/50 hover:bg-white/70"
+              }`}
+              aria-label={`Slide ${i + 1}`}
+            />
+          ))}
         </div>
       </section>
 
@@ -170,7 +231,6 @@ const Index = () => {
                   <p className="text-sm text-muted-foreground">CRQ-MA 12402716 — Químico Responsável</p>
                 </div>
               </div>
-             
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-secondary mt-1 shrink-0" />
                 <p className="text-sm text-muted-foreground">
@@ -183,7 +243,11 @@ const Index = () => {
         </div>
       </section>
 
+      {/* CONTACT */}
+      <ContactSection />
+
       <SiteFooter />
+      <WhatsAppButton />
     </div>
   );
 };
