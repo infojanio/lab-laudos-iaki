@@ -16,9 +16,15 @@ import {
   Edit, UserPlus,
 } from "lucide-react";
 
+import { Helmet } from 'react-helmet-async'
+import { toast } from 'sonner'
+import { Label } from '@/components/ui/label'
+//import { env } from '@/env'
+
 const AdminDashboard = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+
   const [reports, setReports] = useState<Report[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +44,12 @@ const AdminDashboard = () => {
   // Status edit
   const [editingReport, setEditingReport] = useState<string | null>(null);
 
+ //Upload do laudo pdf
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  
+
   useEffect(() => {
     if (!isAuthenticated || !user || user.role !== "admin") {
       navigate("/admin/login");
@@ -51,6 +63,45 @@ const AdminDashboard = () => {
   }, [isAuthenticated, user, navigate]);
 
   const handleCreateReport = async () => {
+
+    if (!pdfFile) {
+      toast.error('Por favor, selecione um arquivo PDF para enviar.')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+
+      const formData = new FormData()
+      formData.append('file', pdfFile)
+
+      const response = await fetch(`${env.VITE_API_URL}/reports/upload-pdf`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao enviar o PDF')
+      }
+
+      const { id } = await response.json()
+
+      toast.success('Laudo enviado com sucesso!', {
+        action: {
+          label: 'Ver Laudo',
+          onClick: () => navigate(`/reports/${id}`),
+        },
+      })
+
+      setPdfFile(null)
+    } catch (error) {
+      toast.error('Erro ao enviar o PDF.')
+    } finally {
+      setIsSubmitting(false)
+    }
+
+
+
     if (!newReport.code || !newReport.clientId) return;
     const created = await reportService.createReport({
       ...newReport,
@@ -93,7 +144,7 @@ const AdminDashboard = () => {
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-2">
             <FlaskConical className="h-5 w-5" />
-            <span className="font-display font-bold">LabAnalytica — Admin</span>
+            <span className="font-display font-bold">LabMoura — Admin</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/" className="text-sm text-primary-foreground/70 hover:text-primary-foreground">Ver site</Link>
@@ -160,9 +211,44 @@ const AdminDashboard = () => {
                       <div><label className="text-xs text-muted-foreground">Data coleta</label><Input type="date" value={newReport.sampleDate} onChange={(e) => setNewReport((p) => ({ ...p, sampleDate: e.target.value }))} /></div>
                       <div><label className="text-xs text-muted-foreground">Data emissão</label><Input type="date" value={newReport.issueDate} onChange={(e) => setNewReport((p) => ({ ...p, issueDate: e.target.value }))} /></div>
                     </div>
-                    <div><label className="text-xs text-muted-foreground">Arquivo PDF (simulado)</label><Input type="file" accept=".pdf" disabled className="opacity-60" /></div>
-                    <Button onClick={handleCreateReport} className="w-full">Cadastrar Laudo</Button>
-                  </div>
+
+
+
+                    <label
+              htmlFor="upload"
+              className="flex items-center justify-center h-32 w-full border border-dashed border-gray-400 rounded-md text-gray-500 hover:border-blue-500 hover:text-blue-600 transition cursor-pointer"
+            >
+              {pdfFile ? (
+                <span className="text-sm">{pdfFile.name}</span>
+              ) : (
+                <span className="text-sm">
+                  Clique aqui para selecionar o PDF
+                </span>
+              )}
+            </label>
+
+            <input
+              id="upload"
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  setPdfFile(e.target.files[0])
+                }
+              }}
+            />
+             </div>
+             <Button
+            className="w-full"
+            disabled={isSubmitting || !pdfFile}
+            onClick={handleCreateReport}
+          >
+            {isSubmitting ? 'Enviando...' : 'Salvar Laudo'}
+          </Button>
+
+
+                  
                 </DialogContent>
               </Dialog>
             </div>
