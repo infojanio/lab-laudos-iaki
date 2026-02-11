@@ -22,9 +22,9 @@ import lab4 from "@/assets/laudosdig.jpg";
 const heroSlides = [
   { image: labImage4, position: "object-[center_40%]", title: "Análises laboratoriais com confiabilidade e transparência", subtitle: "Laudos digitais com validação pública via QR Code." },
   { image: lab1, position: "object-[center_45%]", title: "Qualidade da água garantida por análises precisas", subtitle: "Monitoramento completo de potabilidade e efluentes." },
-  { image: lab2, position: "object-[center_25%]", title: "Tecnologia e rigor técnico em cada amostra", subtitle: "Equipamentos modernos e equipe qualificada." },
-  { image: lab3, position: "object-[center_30%]", title: "Compromisso com o meio ambiente", subtitle: "Análises ambientais para licenciamento e sustentabilidade." },
-  { image: lab4, position: "object-[center_35%]", title: "Laudos digitais com validação instantânea", subtitle: "QR Code exclusivo para verificação pública de autenticidade." },
+  { image: lab2, position: "object-[center_32%]", title: "Tecnologia e rigor técnico em cada amostra", subtitle: "Equipamentos modernos e equipe qualificada." },
+  { image: lab3, position: "object-[center_32%]", title: "Compromisso com o meio ambiente", subtitle: "Análises ambientais para licenciamento e sustentabilidade." },
+  { image: lab4, position: "object-[center_45%]", title: "Laudos digitais com validação instantânea", subtitle: "QR Code exclusivo para verificação pública de autenticidade." },
 ];
 
 
@@ -64,7 +64,7 @@ const Index = () => {
       <SiteHeader />
 
       {/* HERO WITH SLIDER */}
-      <section className="relative overflow-hidden h-[35vh] md:h-[45vh] flex items-center">
+      <section className="relative overflow-hidden h-[55vh] md:h-[65vh] flex items-center">
 
         {/* Background images */}
         <AnimatePresence mode="wait">
@@ -83,8 +83,6 @@ const Index = () => {
   className={`absolute inset-0 w-full h-full object-cover ${heroSlides[currentSlide].position || "object-center"}`}
 />
 
-
-
           </motion.div>
         </AnimatePresence>
 
@@ -95,37 +93,41 @@ const Index = () => {
         
         <div className="container relative z-10 py-14 md:py-20">
 
-          <div className="max-w-2xl">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSlide}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.6 }}
-              >
-                <h1 className="font-display text-3xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-lg">
-                  {heroSlides[currentSlide].title}
-                </h1>
-                <p className="mt-4 text-lg md:text-xl text-white/90 max-w-xl drop-shadow-md">
-                  {heroSlides[currentSlide].subtitle}
-                </p>
-              </motion.div>
-            </AnimatePresence>
+        <div className="max-w-2xl">
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="mt-8 flex flex-wrap gap-4"
-            >
-              <Link to="/validar">
+<div className="min-h-[180px] md:min-h-[220px]">
+  <AnimatePresence mode="wait">
+    <motion.div
+      key={currentSlide}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.6 }}
+    >
+      <h1 className="font-display text-3xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-lg">
+        {heroSlides[currentSlide].title}
+      </h1>
+      <p className="mt-4 text-lg md:text-xl text-white/90 max-w-xl drop-shadow-md">
+        {heroSlides[currentSlide].subtitle}
+      </p>
+    </motion.div>
+  </AnimatePresence>
+</div>
+
+{/* Botões */}
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6, delay: 0.3 }}
+  className="mt-8 flex flex-wrap gap-4"
+>
+            <Link to="/validar">
                 <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold shadow-lg">
                   <QrCode className="mr-2 h-5 w-5" /> Validar Laudo
                 </Button>
               </Link>
               <a href="#contato">
-                <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/20 font-semibold backdrop-blur-sm">
+                <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold shadow-lg">
                   Solicitar Análise <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </a>
