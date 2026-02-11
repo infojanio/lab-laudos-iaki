@@ -9,20 +9,58 @@ import { reportService } from "@/services/reportService";
 import { Report, ANALYSIS_TYPE_LABELS } from "@/types";
 import { Search, QrCode, FileDown, AlertCircle, Calendar, User, FlaskConical, Building2 } from "lucide-react";
 
+
+
+import { Label } from '@/components/ui/label'
+import { useForm } from 'react-hook-form'
+import { Helmet } from 'react-helmet-async'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useNavigate } from 'react-router-dom'
+//import { env } from '@/env'
+
+
+const signInSchema = z.object({
+  reportId: z.string().min(1, 'Informe a chave do laudo'),
+})
+
+type SignInData = z.infer<typeof signInSchema>
+
 const ValidateReport = () => {
+  const navigate = useNavigate()
+
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting, errors },
+  } = useForm<SignInData>({
+    resolver: zodResolver(signInSchema),
+  })
+
   const [code, setCode] = useState("");
   const [report, setReport] = useState<Report | null>(null);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSearch = async () => {
-    if (!code.trim()) return;
-    setLoading(true);
-    const result = await reportService.validateReport(code.trim());
-    setReport(result);
-    setSearched(true);
-    setLoading(false);
-  };
+  async function handleSearch(data: SignInData) {
+    try {
+      const response = await fetch(
+        `${env.VITE_API_URL}/reports/${data.reportId}`,
+      )
+      const result = await response.json()
+
+      if (!response.ok || !result?.report?.signedPdfUrl) {
+        throw new Error('Laudo não encontrado')
+      }
+
+      // Redireciona para a visualização pública do laudo
+      navigate(`/reports/${data.reportId}`)
+    } catch (error) {
+      toast.error('Laudo não encontrado. Verifique a chave digitada.')
+    }
+  }
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -40,19 +78,23 @@ const ValidateReport = () => {
             </p>
           </div>
 
-          <div className="flex gap-3">
-            <Input
-              placeholder="Ex: LAB-2024-001"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              className="text-base"
-            />
-            <Button onClick={handleSearch} disabled={loading}>
-              <Search className="h-4 w-4 mr-2" />
-              {loading ? "Buscando..." : "Validar"}
+          <form onSubmit={handleSubmit(handleSearch)} className="space-y-4">
+
+
+            <div className="space-y-2">
+              <Label htmlFor="reportId"></Label>
+              <Input id="reportId" {...register('reportId')} />
+              {errors.reportId && (
+                <p className="text-sm text-red-500">
+                  {errors.reportId.message}
+                </p>
+              )}
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Buscando...' : 'Acessar Laudo'}
             </Button>
-          </div>
+          </form>
 
           {searched && !report && (
             <Card className="mt-8 border-destructive/30">
