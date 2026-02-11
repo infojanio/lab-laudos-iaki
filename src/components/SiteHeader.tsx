@@ -11,14 +11,22 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 glass">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: `url(${logo})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+        <div 
+  className="absolute inset-0 opacity-5 pointer-events-none"
+  style={{ 
+   
+    backgroundSize: "cover", 
+    backgroundPosition: "center" 
+  }} 
+/>
+
           <FlaskConical className="h-7 w-7 text-primary" />
           <span className="font-display text-xl font-bold text-primary">LabMoura</span>
         </Link>
 
         {/* Desktop */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link to="/" className="text-foreground/80 hover:text-primary transition-colors">Início</Link>
+          <Link to="/" className="text-foreground/80 hover:text-primary transition-colors" >Início</Link>
           <Link to="/validar" className="text-foreground/80 hover:text-primary transition-colors">Validar Laudo</Link>
           <Link to="/cliente/login" className="text-foreground/80 hover:text-primary transition-colors">Área do Cliente</Link>
           <Link to="/admin/login">
