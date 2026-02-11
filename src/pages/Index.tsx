@@ -12,19 +12,22 @@ import {
 } from "lucide-react";
 import labImage3 from "@/assets/labMoura.png";
 import labImage6 from "@/assets/doctor.jpg";
-import labImage4 from "@/assets/laboratory.avif";
-import lab1 from "@/assets/lab-1.avif";
-import lab2 from "@/assets/lab-2.avif";
-import lab3 from "@/assets/lab-3.avif";
-import lab4 from "@/assets/lab-4.avif";
+import labImage4 from "@/assets/water.jpg";
+
+import lab1 from "@/assets/laboratory.avif";
+import lab2 from "@/assets/lab.png";
+import lab3 from "@/assets/6.avif";
+import lab4 from "@/assets/laudosdig.jpg";
 
 const heroSlides = [
-  { image: labImage4, title: "Análises laboratoriais com confiabilidade e transparência", subtitle: "Laudos digitais com validação pública via QR Code." },
-  { image: lab1, title: "Qualidade da água garantida por análises precisas", subtitle: "Monitoramento completo de potabilidade e efluentes." },
-  { image: lab2, title: "Tecnologia e rigor técnico em cada amostra", subtitle: "Equipamentos modernos e equipe qualificada." },
-  { image: lab3, title: "Compromisso com o meio ambiente", subtitle: "Análises ambientais para licenciamento e sustentabilidade." },
-  { image: lab4, title: "Laudos digitais com validação instantânea", subtitle: "QR Code exclusivo para verificação pública de autenticidade." },
+  { image: labImage4, position: "object-[center_40%]", title: "Análises laboratoriais com confiabilidade e transparência", subtitle: "Laudos digitais com validação pública via QR Code." },
+  { image: lab1, position: "object-[center_45%]", title: "Qualidade da água garantida por análises precisas", subtitle: "Monitoramento completo de potabilidade e efluentes." },
+  { image: lab2, position: "object-[center_25%]", title: "Tecnologia e rigor técnico em cada amostra", subtitle: "Equipamentos modernos e equipe qualificada." },
+  { image: lab3, position: "object-[center_30%]", title: "Compromisso com o meio ambiente", subtitle: "Análises ambientais para licenciamento e sustentabilidade." },
+  { image: lab4, position: "object-[center_35%]", title: "Laudos digitais com validação instantânea", subtitle: "QR Code exclusivo para verificação pública de autenticidade." },
 ];
+
+
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -61,7 +64,8 @@ const Index = () => {
       <SiteHeader />
 
       {/* HERO WITH SLIDER */}
-      <section className="relative overflow-hidden min-h-[480px] md:min-h-[560px] flex items-center">
+      <section className="relative overflow-hidden h-[35vh] md:h-[45vh] flex items-center">
+
         {/* Background images */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -72,10 +76,15 @@ const Index = () => {
             transition={{ duration: 1, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${heroSlides[currentSlide].image})` }}
-            />
+
+<img
+  src={heroSlides[currentSlide].image}
+  alt="Slide"
+  className={`absolute inset-0 w-full h-full object-cover ${heroSlides[currentSlide].position || "object-center"}`}
+/>
+
+
+
           </motion.div>
         </AnimatePresence>
 
@@ -83,7 +92,9 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-[hsl(205,75%,10%,0.85)] via-[hsl(205,75%,15%,0.75)] to-[hsl(205,75%,20%,0.6)]" />
 
         {/* Content */}
-        <div className="container relative z-10 py-20 md:py-28">
+        
+        <div className="container relative z-10 py-14 md:py-20">
+
           <div className="max-w-2xl">
             <AnimatePresence mode="wait">
               <motion.div
