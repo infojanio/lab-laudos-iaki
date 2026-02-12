@@ -1,81 +1,133 @@
-/**
- * Report service - simulates API calls.
- * Replace implementations with real API calls when backend is ready.
- */
-
-import { mockReports, mockClients } from "./mockData";
-import { Report, Client, AnalysisType, ReportStatus } from "@/types";
-
-// Simulate network delay
-const delay = (ms = 500) => new Promise((r) => setTimeout(r, ms));
-
-let reports = [...mockReports];
-let clients = [...mockClients];
+import { api } from "./api";
+import { Report, Client, ReportStatus, CreateReportDTO } from "@/types";
 
 export const reportService = {
+
+  // ======================================================
   // PUBLIC
+  // ======================================================
+
+  /**
+   * 🔹 Validação por ID
+   * Backend atual suporta:
+   * GET /reports/:id
+   */
+  async getPublicReport(id: string): Promise<Report | null> {
+    try {
+      const response = await api.get(`/reports/${id}`);
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * 🔸 FUTURO (backend precisa implementar)
+   * GET /reports/code/:code
+   */
+  /*
   async validateReport(code: string): Promise<Report | null> {
-    await delay(800);
-    const report = reports.find((r) => r.code.toLowerCase() === code.toLowerCase());
-    if (!report) return null;
-    const client = clients.find((c) => c.id === report.clientId);
-    return { ...report, client };
+    try {
+      const response = await api.get(`/reports/code/${code}`);
+      return response.data;
+    } catch {
+      return null;
+    }
   },
+  */
 
+
+  // ======================================================
   // CLIENT
+  // ======================================================
+
+  /**
+   * 🔸 FUTURO (backend precisa implementar)
+   * GET /clients/:email/reports
+   */
+  /*
   async getClientReports(email: string): Promise<Report[]> {
-    await delay();
-    const client = clients.find((c) => c.email === email);
-    if (!client) return [];
-    return reports
-      .filter((r) => r.clientId === client.id)
-      .map((r) => ({ ...r, client }));
+    const response = await api.get(`/clients/${email}/reports`);
+    return response.data;
   },
+  */
 
+
+  // ======================================================
   // ADMIN
+  // ======================================================
+
+  /**
+   * 🔹 Listar todos os relatórios
+   * Backend atual suporta:
+   * GET /reports
+   */
   async getAllReports(): Promise<Report[]> {
-    await delay();
-    return reports.map((r) => ({
-      ...r,
-      client: clients.find((c) => c.id === r.clientId),
-    }));
+    const response = await api.get("/reports");
+    return response.data;
   },
 
+  /**
+   * 🔸 FUTURO (backend precisa implementar)
+   * GET /clients
+   */
+  /*
   async getAllClients(): Promise<Client[]> {
-    await delay();
-    return [...clients];
+    const response = await api.get("/clients");
+    return response.data;
   },
+  */
 
-  async createReport(data: Omit<Report, "id" | "createdAt" | "updatedAt" | "labName">): Promise<Report> {
-    await delay();
-    const newReport: Report = {
-      ...data,
-      id: `r${Date.now()}`,
-      labName: "LabAnalytica",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    reports = [newReport, ...reports];
-    return newReport;
+  /**
+   * 🔹 Criar relatório
+   * Backend atual suporta:
+   * POST /reports
+   */
+  async createReport(data: CreateReportDTO): Promise<Report> {
+    const response = await api.post("/reports", data);
+    return response.data;
   },
-
-  async updateReportStatus(id: string, status: ReportStatus): Promise<Report | null> {
-    await delay();
-    const idx = reports.findIndex((r) => r.id === id);
-    if (idx === -1) return null;
-    reports[idx] = { ...reports[idx], status, updatedAt: new Date().toISOString() };
-    return reports[idx];
+  
+  /**
+   * 🔸 FUTURO (backend precisa implementar)
+   * PATCH /reports/:id/status
+   */
+  /*
+  async updateReportStatus(
+    id: string,
+    status: ReportStatus
+  ): Promise<Report | null> {
+    const response = await api.patch(`/reports/${id}/status`, { status });
+    return response.data;
   },
+  */
 
-  async createClient(data: Omit<Client, "id" | "createdAt" | "updatedAt">): Promise<Client> {
-    await delay();
-    const newClient: Client = {
-      ...data,
-      id: `c${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    clients = [newClient, ...clients];
-    return newClient;
+  /**
+   * 🔸 FUTURO (backend precisa implementar)
+   * POST /clients
+   */
+  /*
+  async createClient(
+    data: Omit<Client, "id" | "createdAt" | "updatedAt">
+  ): Promise<Client> {
+    const response = await api.post("/clients", data);
+    return response.data;
+  },
+  */
+
+  /**
+   * 🔹 Upload de PDF
+   * Backend atual suporta:
+   * POST /reports/upload-pdf
+   */
+  async uploadPdf(file: File): Promise<{ pdfUrl: string }> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post("/reports/upload-pdf", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return response.data;
   },
 };
