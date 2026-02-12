@@ -11,6 +11,7 @@ import ClientDashboard from "./pages/ClientDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import ReportPublic from "./pages/ReportPublic";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,8 @@ const App = () => (
             <Route path="/validar" element={<ValidateReport />} />
             <Route path="/cliente/login" element={<ClientLogin />} />
             <Route path="/cliente" element={<ClientDashboard />} />
+            <Route path="/reports/:id" element={<ReportPublic />} />
+
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />

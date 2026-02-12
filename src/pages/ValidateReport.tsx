@@ -1,66 +1,49 @@
-import { useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge } from "@/components/StatusBadge";
+import { QrCode } from "lucide-react";
+
+import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import { reportService } from "@/services/reportService";
-import { Report, ANALYSIS_TYPE_LABELS } from "@/types";
-import { Search, QrCode, FileDown, AlertCircle, Calendar, User, FlaskConical, Building2 } from "lucide-react";
 
+const schema = z.object({
+  reportId: z.string().min(1, "Informe a chave do laudo"),
+});
 
-
-import { Label } from '@/components/ui/label'
-import { useForm } from 'react-hook-form'
-import { Helmet } from 'react-helmet-async'
-import { toast } from 'sonner'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
-//import { env } from '@/env'
-
-
-const signInSchema = z.object({
-  reportId: z.string().min(1, 'Informe a chave do laudo'),
-})
-
-type SignInData = z.infer<typeof signInSchema>
+type FormData = z.infer<typeof schema>;
 
 const ValidateReport = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
     formState: { isSubmitting, errors },
-  } = useForm<SignInData>({
-    resolver: zodResolver(signInSchema),
-  })
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
 
-  const [code, setCode] = useState("");
-  const [report, setReport] = useState<Report | null>(null);
-  const [searched, setSearched] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  async function handleSearch(data: SignInData) {
+  async function handleSearch(data: FormData) {
     try {
-      const response = await fetch(
-        `${env.VITE_API_URL}/reports/${data.reportId}`,
-      )
-      const result = await response.json()
+      // 🔹 FASE 1: validação por ID (já existe no backend)
+      const report = await reportService.getPublicReport(data.reportId);
 
-      if (!response.ok || !result?.report?.signedPdfUrl) {
-        throw new Error('Laudo não encontrado')
+      if (!report) {
+        throw new Error();
       }
 
-      // Redireciona para a visualização pública do laudo
-      navigate(`/reports/${data.reportId}`)
-    } catch (error) {
-      toast.error('Laudo não encontrado. Verifique a chave digitada.')
+      // Redireciona para página pública
+      navigate(`/reports/${data.reportId}`);
+    } catch {
+      toast.error("Laudo não encontrado. Verifique a chave digitada.");
     }
   }
-
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -72,18 +55,28 @@ const ValidateReport = () => {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent">
               <QrCode className="h-8 w-8 text-accent-foreground" />
             </div>
-            <h1 className="font-display text-2xl md:text-3xl font-bold">Validar Laudo</h1>
+
+            <h1 className="font-display text-2xl md:text-3xl font-bold">
+              Validar Laudo
+            </h1>
+
             <p className="text-muted-foreground mt-2">
-              Digite o código do laudo para verificar sua autenticidade.
+              Digite a chave do laudo para verificar sua autenticidade.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(handleSearch)} className="space-y-4">
-
-
+          <form
+            onSubmit={handleSubmit(handleSearch)}
+            className="space-y-4"
+          >
             <div className="space-y-2">
-              <Label htmlFor="reportId"></Label>
-              <Input id="reportId" {...register('reportId')} />
+              <Label htmlFor="reportId">Chave do Laudo</Label>
+              <Input
+                id="reportId"
+                placeholder="Ex: 9f8c7a21-..."
+                {...register("reportId")}
+              />
+
               {errors.reportId && (
                 <p className="text-sm text-red-500">
                   {errors.reportId.message}
@@ -91,56 +84,14 @@ const ValidateReport = () => {
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Buscando...' : 'Acessar Laudo'}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Buscando..." : "Acessar Laudo"}
             </Button>
           </form>
-
-          {searched && !report && (
-            <Card className="mt-8 border-destructive/30">
-              <CardContent className="flex items-center gap-3 py-6">
-                <AlertCircle className="h-6 w-6 text-destructive shrink-0" />
-                <div>
-                  <p className="font-semibold">Laudo não encontrado</p>
-                  <p className="text-sm text-muted-foreground">Verifique o código digitado e tente novamente.</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {report && (
-            <Card className="mt-8">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="font-display text-xl">{report.code}</CardTitle>
-                  <StatusBadge status={report.status} />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-foreground">{report.labName}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <FlaskConical className="h-4 w-4 text-primary" />
-                  {ANALYSIS_TYPE_LABELS[report.analysisType]}
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  Emissão: {new Date(report.issueDate).toLocaleDateString("pt-BR")}
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <User className="h-4 w-4 text-primary" />
-                  {report.responsibleTechnician} — {report.technicianRegistration}
-                </div>
-                <p className="text-muted-foreground pt-2">{report.description}</p>
-                <Button variant="outline" className="w-full mt-4" onClick={() => alert("Download simulado do PDF")}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Baixar PDF do Laudo
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </main>
 
