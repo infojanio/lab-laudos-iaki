@@ -195,9 +195,9 @@ const AdminDashboard = () => {
                     </TableCell>
 
                     <TableCell>
-                      {r.pdfUrl ? (
+                      {r.signedPdfUrl ? (
                         <a
-                          href={r.pdfUrl}
+                          href={r.signedPdfUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
