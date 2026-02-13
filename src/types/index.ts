@@ -26,8 +26,8 @@ export interface Client {
 }
 
 export interface Report {
-  id: string;
-  code: string;
+  id: string; // UUID
+  code: string; // pode ser igual ao id ou código interno
   clientId: string;
   analysisType: AnalysisType;
   description: string;
@@ -36,11 +36,11 @@ export interface Report {
   sampleDate: string;
   issueDate: string;
   status: ReportStatus;
-  signedPdfUrl?: string;
+  signedPdfUrl?: string; // 🔥 alinhado ao backend
   createdAt?: string;
   updatedAt?: string;
 
-  // 🔹 opcional para include do Prisma
+  // Include opcional (Prisma include)
   client?: Client;
 }
 
@@ -58,12 +58,15 @@ export interface CreateReportDTO {
   sampleDate: string;
   issueDate: string;
   status: ReportStatus;
-  pdfUrl?: string;
+
+  // 🔥 alinhado ao backend
+  signedPdfUrl?: string;
 }
 
 export interface UpdateReportStatusDTO {
   status: ReportStatus;
 }
+
 
 export interface CreateClientDTO {
   name: string;
