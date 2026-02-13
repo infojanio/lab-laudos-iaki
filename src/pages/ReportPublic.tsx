@@ -94,21 +94,18 @@ const ReportPublic = () => {
             </div>
 
             {report.signedPdfUrl && (
-              <Button
-                variant="outline"
-                className="w-full mt-4"
-                asChild
-              >
-                <a
-                  href={signedPdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Baixar PDF Assinado
-                </a>
-              </Button>
-            )}
+  <Button variant="outline" className="w-full mt-4" asChild>
+    <a
+      href={report.signedPdfUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <FileDown className="h-4 w-4 mr-2" />
+      Baixar PDF Assinado
+    </a>
+  </Button>
+)}
+
           </Card>
         </div>
       </main>
