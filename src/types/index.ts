@@ -37,7 +37,6 @@ export interface Report {
   issueDate: string;
   status: ReportStatus;
   signedPdfUrl?: string;
-
   createdAt?: string;
   updatedAt?: string;
 
