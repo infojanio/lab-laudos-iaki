@@ -9,29 +9,40 @@ import { reportService } from "@/services/reportService";
 import {
   Report,
   ANALYSIS_TYPE_LABELS,
-  REPORT_STATUS_LABELS,
 } from "@/types";
 import {
   FileDown,
   Calendar,
   User,
   FlaskConical,
-  Building2,
 } from "lucide-react";
 
 const ReportPublic = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
-
-    reportService
-      .getPublicReport(id)
-      .then(setReport)
-      .finally(() => setLoading(false));
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+  
+    async function loadReport() {
+      try {
+        const data = await reportService.getPublicReport(id!); //verificar implementação sem !
+        setReport(data);
+      } catch {
+        setReport(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+  
+    loadReport();
   }, [id]);
+  
 
   if (loading) {
     return (
@@ -49,10 +60,12 @@ const ReportPublic = () => {
     );
   }
 
-  // 🔹 Monta URL completa do PDF
-  const signedPdfUrl = report.signedPdfUrl?.startsWith("http")
-    ? report.signedPdfUrl
-    : `${import.meta.env.VITE_API_URL}${report.signedPdfUrl}`;
+  // 🔹 Normaliza URL do PDF (funciona com relativo ou absoluto)
+  const normalizedPdfUrl = report.signedPdfUrl
+    ? report.signedPdfUrl.startsWith("http")
+      ? report.signedPdfUrl
+      : `${import.meta.env.VITE_API_URL}${report.signedPdfUrl}`
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -93,19 +106,26 @@ const ReportPublic = () => {
               )}
             </div>
 
-            {report.signedPdfUrl && (
-  <Button variant="outline" className="w-full mt-4" asChild>
-    <a
-      href={report.signedPdfUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <FileDown className="h-4 w-4 mr-2" />
-      Baixar PDF Assinado
-    </a>
-  </Button>
-)}
-
+            {normalizedPdfUrl ? (
+              <Button
+                variant="outline"
+                className="w-full mt-4"
+                asChild
+              >
+                <a
+                  href={normalizedPdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Baixar PDF Assinado
+                </a>
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground mt-4 text-center">
+                PDF ainda não disponível.
+              </p>
+            )}
           </Card>
         </div>
       </main>

@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { reportService } from "@/services/reportService";
 
 const schema = z.object({
-  reportId: z.string().min(1, "Informe a chave do laudo"),
+  reportId: z.string().uuid("Informe um UUID válido do laudo"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -31,17 +31,16 @@ const ValidateReport = () => {
 
   async function handleSearch(data: FormData) {
     try {
-      // 🔹 FASE 1: validação por ID (já existe no backend)
       const report = await reportService.getPublicReport(data.reportId);
 
-      if (!report) {
+      if (!report || !report.signedPdfUrl) {
         throw new Error();
       }
 
-      // Redireciona para página pública
-      navigate(`/reports/${data.reportId}`);
+      // Redireciona para página pública oficial
+      navigate(`/reports/${report.id}`);
     } catch {
-      toast.error("Laudo não encontrado. Verifique a chave digitada.");
+      toast.error("Laudo não encontrado ou ainda não disponível.");
     }
   }
 

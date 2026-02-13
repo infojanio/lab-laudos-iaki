@@ -1,20 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { reportService } from "@/services/reportService";
-import { api } from "@/services/api";
 import {
   Report,
-  AnalysisType,
-  ReportStatus,
+  Client,
   ANALYSIS_TYPE_LABELS,
-  REPORT_STATUS_LABELS,
 } from "@/types";
 
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+
 import {
   Table,
   TableBody,
@@ -27,8 +31,11 @@ import {
 import {
   FlaskConical,
   LogOut,
-  Edit,
   ExternalLink,
+  Plus,
+  Users,
+  FileText,
+  Search,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -38,34 +45,39 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const [reports, setReports] = useState<Report[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const [newReport, setNewReport] = useState({
-    code: "",
-    clientId: "",
-    analysisType: "agua" as AnalysisType,
-    description: "",
-    responsibleTechnician: "",
-    technicianRegistration: "",
-    sampleDate: "",
-    issueDate: "",
-    status: "em_analise" as ReportStatus,
-  });
+  // ================= LOAD DATA =================
 
-  // ======================================================
-  // CARREGAR RELATÓRIOS (SEM PAGINAÇÃO – BACKEND ATUAL)
-  // ======================================================
-
-  const loadReports = async () => {
-    setLoading(true);
+  const loadData = async () => {
     try {
       const data = await reportService.getAllReports();
-      setReports(data);
+
+      // Ordena por data mais recente
+      const sorted = data.sort(
+        (a, b) =>
+          new Date(b.issueDate).getTime() -
+          new Date(a.issueDate).getTime()
+      );
+
+      setReports(sorted);
+
+      // Extrai clientes únicos dos relatórios
+      const uniqueClients = Array.from(
+        new Map(
+          sorted
+            .filter((r) => r.client)
+            .map((r) => [r.client!.id, r.client])
+        ).values()
+      );
+
+      setClients(uniqueClients as Client[]);
     } catch {
-      toast.error("Erro ao carregar laudos.");
+      toast.error("Erro ao carregar dados.");
     } finally {
       setLoading(false);
     }
@@ -77,166 +89,227 @@ const AdminDashboard = () => {
       return;
     }
 
-    loadReports();
+    loadData();
   }, []);
 
-  // ======================================================
-  // CRIAR RELATÓRIO
-  // ======================================================
+  // ================= FILTRO =================
 
-  const handleCreateReport = async () => {
-    if (!pdfFile) {
-      toast.error("Selecione um PDF.");
-      return;
-    }
+  const filteredReports = useMemo(() => {
+    return reports.filter((r) => {
+      const matchSearch =
+        r.code.toLowerCase().includes(search.toLowerCase()) ||
+        r.client?.name
+          ?.toLowerCase()
+          .includes(search.toLowerCase());
 
-    try {
-      setIsSubmitting(true);
+      const matchStatus =
+        statusFilter === "all" || r.status === statusFilter;
 
-      const formData = new FormData();
-      formData.append("file", pdfFile);
-
-      const upload = await api.post("/reports/upload-pdf", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      const { pdfUrl } = upload.data;
-
-      await reportService.createReport({
-        ...newReport,
-        pdfUrl,
-      });
-
-      toast.success("Laudo criado com sucesso!");
-      setPdfFile(null);
-      loadReports();
-    } catch {
-      toast.error("Erro ao criar laudo.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // ======================================================
-  // 🔸 FASE 2 – Atualização de Status
-  // Backend precisa implementar:
-  // PATCH /reports/:id/status
-  // ======================================================
-
-  /*
-  const handleStatusChange = async (reportId: string, newStatus: ReportStatus) => {
-    await reportService.updateReportStatus(reportId, newStatus);
-    loadReports();
-  };
-  */
+      return matchSearch && matchStatus;
+    });
+  }, [reports, search, statusFilter]);
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando...</p>
+        Carregando...
       </div>
     );
+  }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-50 bg-primary text-primary-foreground">
-        <div className="container flex h-14 items-center justify-between">
+    <div className="min-h-screen bg-muted/40">
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 bg-white border-b">
+        <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <FlaskConical className="h-5 w-5" />
-            <span className="font-display font-bold">LabMoura — Admin</span>
+            <FlaskConical className="h-6 w-6 text-primary" />
+            <span className="font-bold text-lg">LabMoura Admin</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-1" /> Sair
-          </Button>
+
+          <div className="flex items-center gap-4">
+            <Link to="/">
+              <Button variant="outline" size="sm">
+                Voltar ao site
+              </Button>
+            </Link>
+
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-1" />
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 
-      <main className="container py-8">
+      <main className="container py-8 space-y-6">
 
-        {/* 🔸 FASE 2 – Filtro por data (depende backend) */}
-        {/*
-        <div className="flex gap-4 mb-6">
-          <Input type="date" />
-          <Input type="date" />
-          <Button>Filtrar</Button>
-        </div>
-        */}
+        <Tabs defaultValue="reports">
 
-        <Card>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Emissão</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Laudo</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
+          <TabsList>
+            <TabsTrigger value="reports">
+              <FileText className="h-4 w-4 mr-1" />
+              Laudos
+            </TabsTrigger>
 
-              <TableBody>
-                {reports.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.code}</TableCell>
-                    <TableCell>{ANALYSIS_TYPE_LABELS[r.analysisType]}</TableCell>
-                    <TableCell>
-                      {new Date(r.issueDate).toLocaleDateString("pt-BR")}
-                    </TableCell>
+            <TabsTrigger value="clients">
+              <Users className="h-4 w-4 mr-1" />
+              Clientes
+            </TabsTrigger>
+          </TabsList>
 
-                    <TableCell>
-                      <StatusBadge status={r.status} />
-                    </TableCell>
+          {/* ================= LAUDOS ================= */}
+          <TabsContent value="reports" className="space-y-6">
 
-                    <TableCell>
-                      {r.signedPdfUrl ? (
-                        <a
-                          href={r.signedPdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
-                        >
-                          Visualizar
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
+            {/* Header da Aba */}
+            <div className="flex justify-between items-center border-b pb-3">
+              <h2 className="text-lg font-semibold">Laudos</h2>
 
-                    <TableCell className="text-right">
-                      {/* 🔸 FASE 2 – Edição de status */}
-                      {/*
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingReport(r.id)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      */}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              <Link to="/admin/create">
+                <Button>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Novo Laudo
+                </Button>
+              </Link>
+            </div>
 
-          {/* 🔸 FASE 2 – Paginação (depende backend) */}
-          {/*
-          <div className="flex justify-between items-center p-4">
-            <Button>Anterior</Button>
-            <span>Página 1</span>
-            <Button>Próxima</Button>
-          </div>
-          */}
-        </Card>
+            {/* FILTROS */}
+            <Card className="p-4 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+              <div className="flex items-center gap-2 w-full md:w-1/3">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por código ou cliente..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-2 flex-wrap">
+                {["all", "valido", "em_analise", "cancelado"].map(
+                  (status) => (
+                    <Button
+                      key={status}
+                      variant={
+                        statusFilter === status
+                          ? "default"
+                          : "outline"
+                      }
+                      size="sm"
+                      onClick={() => setStatusFilter(status)}
+                    >
+                      {status === "all"
+                        ? "Todos"
+                        : status.replace("_", " ")}
+                    </Button>
+                  )
+                )}
+              </div>
+            </Card>
+
+            {/* TABELA */}
+            <Card>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Emissão</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>PDF</TableHead>
+                    </TableRow>
+                  </TableHeader>
+
+                  <TableBody>
+                    {filteredReports.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell>{r.code}</TableCell>
+                        <TableCell>
+                          {r.client?.name ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          {ANALYSIS_TYPE_LABELS[r.analysisType]}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(
+                            r.issueDate
+                          ).toLocaleDateString("pt-BR")}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={r.status} />
+                        </TableCell>
+                        <TableCell>
+                          {r.signedPdfUrl ? (
+                            <a
+                              href={r.signedPdfUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
+                            >
+                              Abrir
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+
+          </TabsContent>
+
+          {/* ================= CLIENTES ================= */}
+          <TabsContent value="clients" className="space-y-6">
+
+            {/* Header da Aba */}
+            <div className="flex justify-between items-center border-b pb-3">
+              <h2 className="text-lg font-semibold">Clientes</h2>
+
+              <Link to="/admin/client/create">
+                <Button>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Novo Cliente
+                </Button>
+              </Link>
+            </div>
+
+            <Card>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Documento</TableHead>
+                    </TableRow>
+                  </TableHeader>
+
+                  <TableBody>
+                    {clients.map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell>{c.name}</TableCell>
+                        <TableCell>{c.email}</TableCell>
+                        <TableCell>{c.document}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
