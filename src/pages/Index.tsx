@@ -11,13 +11,13 @@ import {
   FlaskConical, Search, FileCheck, ArrowRight, Award, CheckCircle2,
 } from "lucide-react";
 import labImage3 from "@/assets/labMoura.png";
-import labImage6 from "@/assets/doctor.jpg";
+import lab6 from "@/assets/digital.jpg";
 import labImage4 from "@/assets/water.jpg";
 
 import lab1 from "@/assets/laboratory.avif";
 import lab2 from "@/assets/lab.png";
 import lab3 from "@/assets/6.avif";
-import lab4 from "@/assets/laudosdig.jpg";
+import lab4 from "@/assets/doctor.jpg";
 
 const heroSlides = [
   { image: labImage4, position: "object-[center_40%]", title: "Análises laboratoriais com confiabilidade e transparência", subtitle: "Laudos digitais com validação pública via QR Code." },
@@ -197,7 +197,7 @@ const Index = () => {
             </ul>
           </div>
           <div className="rounded-xl overflow-hidden shadow-lg">
-            <img src={labImage6} alt="Laboratório" className="w-full h-64 md:h-80 object-cover" />
+            <img src={lab6} alt="Laboratório" className="w-full h-64 md:h-80 object-cover" />
           </div>
         </div>
       </section>

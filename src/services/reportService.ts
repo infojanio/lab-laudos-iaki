@@ -120,7 +120,7 @@ export const reportService = {
    * Backend atual suporta:
    * POST /reports/upload-pdf
    */
-  async uploadPdf(file: File): Promise<{ pdfUrl: string }> {
+  async uploadPdf(file: File): Promise<{ signedPdfUrl?: string }> {
     const formData = new FormData();
     formData.append("file", file);
 

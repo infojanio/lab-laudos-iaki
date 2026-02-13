@@ -36,7 +36,7 @@ export interface Report {
   sampleDate: string;
   issueDate: string;
   status: ReportStatus;
-  pdfUrl?: string;
+  signedPdfUrl?: string;
 
   createdAt?: string;
   updatedAt?: string;
@@ -77,7 +77,6 @@ export interface CreateClientDTO {
 // ======================================================
 // REQUEST MODELS (USADOS PARA FORMULÁRIOS COMPLEXOS)
 // ======================================================
-
 export interface ReportRequest {
   id: string;
   customerName: string;
@@ -101,7 +100,6 @@ export interface ReportRequest {
 // ======================================================
 // AUTH
 // ======================================================
-
 export interface User {
   id: string;
   email: string;
@@ -118,7 +116,6 @@ export interface AuthState {
 // ======================================================
 // LABELS
 // ======================================================
-
 export const ANALYSIS_TYPE_LABELS: Record<AnalysisType, string> = {
   agua: "Análise de Água",
   solo: "Análise de Solo",

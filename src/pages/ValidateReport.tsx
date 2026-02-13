@@ -73,7 +73,7 @@ const ValidateReport = () => {
               <Label htmlFor="reportId">Chave do Laudo</Label>
               <Input
                 id="reportId"
-                placeholder="Ex: 9f8c7a21-..."
+                placeholder="Ex: 07b63d21-730d-4a9d-9694-4eb7aa58acdf"
                 {...register("reportId")}
               />
 

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Droplets, Mountain, Leaf, QrCode, ShieldCheck, FlaskConical, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import logo from "@/assets/logo.avif";
+
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
