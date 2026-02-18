@@ -152,7 +152,10 @@ const AdminDashboard = () => {
 
         <Tabs defaultValue="reports">
 
+
+
           <TabsList>
+            
             <TabsTrigger value="reports">
               <FileText className="h-4 w-4 mr-1" />
               Laudos
@@ -171,12 +174,23 @@ const AdminDashboard = () => {
             <div className="flex justify-between items-center border-b pb-3">
               <h2 className="text-lg font-semibold">Laudos</h2>
 
-              <Link to="/admin/create">
-                <Button>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Novo Laudo
-                </Button>
-              </Link>
+             
+              <div className="flex gap-3">
+  <Link to="/admin/reports/new-upload">
+    <Button variant="outline">
+      <Plus className="h-4 w-4 mr-1" />
+      Upload PDF
+    </Button>
+  </Link>
+
+  <Link to="/admin/reports/new">
+    <Button>
+      <Plus className="h-4 w-4 mr-1" />
+      Laudo Estruturado
+    </Button>
+  </Link>
+</div>
+
             </div>
 
             {/* FILTROS */}

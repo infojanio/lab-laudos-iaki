@@ -13,6 +13,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import ReportPublic from "./pages/ReportPublic";
 import CreateReport from "./pages/admin/CreateReport";
+import CreateReportWizard from "./pages/admin/CreateReportWizard";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,9 @@ const App = () => (
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/create" element={<CreateReport />} />
+            <Route path="/admin/reports/new-upload" element={<CreateReport />} />
+            <Route path="/admin/reports/new" element={<CreateReportWizard />} />
+
 
             <Route path="*" element={<NotFound />} />
           </Routes>
