@@ -1,64 +1,78 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { ArrowLeft } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
-import StepClient from "@/components/report-wizard/StepClient";
-import StepSample from "@/components/report-wizard/StepSample";
-import StepPhysical from "@/components/report-wizard/StepPhysical";
+import StepReport from "@/components/report-wizard/StepReport"
+import StepClient from "@/components/report-wizard/StepClient"
+import StepSample from "@/components/report-wizard/StepSample"
+import StepPhysical from "@/components/report-wizard/StepPhysical"
+import StepMicrobiological from "@/components/report-wizard/StepMicrobiological"
+import StepReview from "@/components/report-wizard/StepReview"
+import StepObservations from "@/components/report-wizard/StepObservations"
 
-import StepReview from "@/components/report-wizard/StepReview";
-import StepMicrobiological from "@/components/report-wizard/StepMicrobiological";
+// ======================================================
+// STEPS
+// ======================================================
 
 const steps = [
+  "Identificação do Laudo",
   "Cliente",
-  "Amostra",
+  "Amostragem",
   "Físico-Químico",
   "Bacteriológico",
+  "Observações",
   "Revisão",
-];
+]
 
 // ======================================================
 // TIPOS
 // ======================================================
 
-export interface PhysicalRow {
-  parameter: string;
-  result: string;
-  unit?: string;
-  method?: string;
-}
-
-export interface MicroRow {
-  parameter: string;
-  result: string;
-  unit?: string;
-  method?: string;
+export interface ResultRow {
+  parameter: string
+  analysisDate: string
+  result: string
+  vmp: string
+  method: string
 }
 
 export interface CreateReportWizardData {
+  report: {
+    reportNumber: string
+    issueDate: string
+    normativeReference: string
+  }
+
   client: {
-    name: string;
-    document: string;
-    email: string;
-    phone: string;
-    municipality: string;
-    address: string;
-  };
+    name: string
+    document: string
+    address: string
+    municipality: string
+    phone: string
+    email?: string
+  }
 
   sample: {
-    identification: string;
-    location: string;
-    collectionDate: string;
-    collectionTime: string;
-    collectionAgent: string;
-    entryDate: string;
-  };
+    identification: string
+    location: string
+    latitude: string
+    longitude: string
+    collectionDate: string
+    receivedDate: string
+    collectorName: string
+    weatherCondition: string
+    ambientTemperature: string
+  }
 
-  physicalAnalysis: PhysicalRow[];
+  physicalAnalysis: ResultRow[]
+  bacteriologicalAnalysis: ResultRow[]
 
-  bacteriologicalAnalysis: MicroRow[];
+  observations: {
+    useStandardText: boolean
+    customText?: string
+  }
 }
 
 // ======================================================
@@ -66,38 +80,54 @@ export interface CreateReportWizardData {
 // ======================================================
 
 export default function CreateReportWizard() {
-  const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
+  const navigate = useNavigate()
+  const [currentStep, setCurrentStep] = useState(0)
 
   const [formData, setFormData] = useState<CreateReportWizardData>({
+    report: {
+      reportNumber: "",
+      issueDate: "",
+      normativeReference: "RESOLUÇÃO CONAMA 357/05",
+    },
+
     client: {
       name: "",
       document: "",
-      email: "",
-      phone: "",
-      municipality: "",
       address: "",
+      municipality: "",
+      phone: "",
+      email: "",
     },
+
     sample: {
       identification: "",
       location: "",
+      latitude: "",
+      longitude: "",
       collectionDate: "",
-      collectionTime: "",
-      collectionAgent: "",
-      entryDate: "",
+      receivedDate: "",
+      collectorName: "",
+      weatherCondition: "",
+      ambientTemperature: "",
     },
+
     physicalAnalysis: [],
     bacteriologicalAnalysis: [],
-  });
+
+    observations: {
+      useStandardText: true,
+      customText: "",
+    },
+  })
 
   const next = () =>
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
 
   const back = () =>
-    setCurrentStep((prev) => Math.max(prev - 1, 0));
+    setCurrentStep((prev) => Math.max(prev - 1, 0))
 
   return (
-    <div className="container max-w-4xl py-10">
+    <div className="container max-w-5xl py-10">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -112,13 +142,23 @@ export default function CreateReportWizard() {
       </div>
 
       <h1 className="text-3xl font-bold mb-6">
-        Criar Laudo Estruturado
+        Criar Relatório de Ensaio
       </h1>
 
       <Card className="p-8 space-y-6">
 
-        {/* STEP 1 - CLIENTE */}
+        {/* STEP 1 - IDENTIFICAÇÃO DO LAUDO */}
         {currentStep === 0 && (
+          <StepReport
+            data={formData.report}
+            onChange={(report) =>
+              setFormData((prev) => ({ ...prev, report }))
+            }
+          />
+        )}
+
+        {/* STEP 2 - CLIENTE */}
+        {currentStep === 1 && (
           <StepClient
             data={formData.client}
             onChange={(client) =>
@@ -127,8 +167,8 @@ export default function CreateReportWizard() {
           />
         )}
 
-        {/* STEP 2 - AMOSTRA */}
-        {currentStep === 1 && (
+        {/* STEP 3 - AMOSTRAGEM */}
+        {currentStep === 2 && (
           <StepSample
             data={formData.sample}
             onChange={(sample) =>
@@ -137,28 +177,47 @@ export default function CreateReportWizard() {
           />
         )}
 
-        {/* STEP 3 - FÍSICO-QUÍMICO */}
-        {currentStep === 2 && (
+        {/* STEP 4 - FÍSICO-QUÍMICO */}
+        {currentStep === 3 && (
           <StepPhysical
             data={formData.physicalAnalysis}
             onChange={(physicalAnalysis) =>
-              setFormData((prev) => ({ ...prev, physicalAnalysis }))
+              setFormData((prev) => ({
+                ...prev,
+                physicalAnalysis,
+              }))
             }
           />
         )}
 
-        {/* STEP 4 - BACTERIOLÓGICO */}
-        {currentStep === 3 && (
+        {/* STEP 5 - BACTERIOLÓGICO */}
+        {currentStep === 4 && (
           <StepMicrobiological
             data={formData.bacteriologicalAnalysis}
             onChange={(bacteriologicalAnalysis) =>
-              setFormData((prev) => ({ ...prev, bacteriologicalAnalysis }))
+              setFormData((prev) => ({
+                ...prev,
+                bacteriologicalAnalysis,
+              }))
             }
           />
         )}
 
-        {/* STEP 5 - REVISÃO */}
-        {currentStep === 4 && (
+        {/* STEP 6 - OBSERVAÇÕES */}
+        {currentStep === 5 && (
+  <StepObservations
+    data={formData.observations}
+    onChange={(observations) =>
+      setFormData((prev) => ({
+        ...prev,
+        observations,
+      }))
+    }
+  />
+)}
+
+        {/* STEP 7 - REVISÃO */}
+        {currentStep === 6 && (
           <StepReview data={formData} />
         )}
 
@@ -174,12 +233,12 @@ export default function CreateReportWizard() {
 
           <Button onClick={next}>
             {currentStep === steps.length - 1
-              ? "Finalizar"
+              ? "Finalizar Relatório"
               : "Próximo"}
           </Button>
         </div>
 
       </Card>
     </div>
-  );
+  )
 }

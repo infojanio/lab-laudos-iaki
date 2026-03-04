@@ -1,132 +1,145 @@
-import { Plus, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Plus, Trash2 } from "lucide-react"
 
 export interface MicroRow {
-  parameter: string;
-  result: string;
-  unit?: string;
-  method?: string;
+  parameter: string
+  analysisDate: string
+  result: string
+  vmp: string
+  method: string
 }
 
-interface Props {
-  data: MicroRow[];
-  onChange: (rows: MicroRow[]) => void;
+interface StepMicrobiologicalProps {
+  data: MicroRow[]
+  onChange: (rows: MicroRow[]) => void
 }
 
-const SUGGESTED_PARAMETERS = [
-  "Coliformes Totais",
-  "Escherichia coli",
-  "Enterococos",
-];
+export default function StepMicrobiological({
+  data,
+  onChange,
+}: StepMicrobiologicalProps) {
 
-export default function StepMicrobiological({ data, onChange }: Props) {
-  function addRow(prefill?: Partial<MicroRow>) {
+  const addRow = () => {
     onChange([
       ...data,
       {
-        parameter: prefill?.parameter ?? "",
-        result: prefill?.result ?? "",
-        unit: prefill?.unit ?? "",
-        method: prefill?.method ?? "",
+        parameter: "",
+        analysisDate: "",
+        result: "",
+        vmp: "",
+        method: "",
       },
-    ]);
+    ])
   }
 
-  function removeRow(index: number) {
-    const updated = [...data];
-    updated.splice(index, 1);
-    onChange(updated);
+  const updateRow = (
+    index: number,
+    field: keyof MicroRow,
+    value: string
+  ) => {
+    const updated = [...data]
+    updated[index][field] = value
+    onChange(updated)
   }
 
-  function updateRow(index: number, field: keyof MicroRow, value: string) {
-    const updated = [...data];
-    updated[index] = { ...updated[index], [field]: value };
-    onChange(updated);
+  const removeRow = (index: number) => {
+    const updated = data.filter((_, i) => i !== index)
+    onChange(updated)
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">Ensaios Bacteriológicos</h2>
-          <p className="text-sm text-muted-foreground">
-            Adicione os parâmetros bacteriológicos analisados (ex.: Coliformes Totais, E. coli).
-          </p>
-        </div>
 
-        <Button type="button" size="sm" onClick={() => addRow()}>
-          <Plus className="h-4 w-4 mr-1" />
+      <div>
+        <h2 className="text-xl font-semibold mb-2">
+          Ensaios Bacteriológicos
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Informe os parâmetros microbiológicos analisados conforme metodologia aplicada.
+        </p>
+      </div>
+
+      {/* Cabeçalho da Tabela */}
+      <div className="hidden md:grid grid-cols-6 gap-4 text-xs font-medium text-muted-foreground border-b pb-2">
+        <span>Parâmetro</span>
+        <span>Data Análise</span>
+        <span>Resultado</span>
+        <span>VMP</span>
+        <span>Método</span>
+        <span></span>
+      </div>
+
+      {/* Linhas */}
+      <div className="space-y-4">
+        {data.map((row, index) => (
+          <div
+            key={index}
+            className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center"
+          >
+            <Input
+              placeholder="Ex: Coliformes Totais"
+              value={row.parameter}
+              onChange={(e) =>
+                updateRow(index, "parameter", e.target.value)
+              }
+            />
+
+            <Input
+              type="date"
+              value={row.analysisDate}
+              onChange={(e) =>
+                updateRow(index, "analysisDate", e.target.value)
+              }
+            />
+
+            <Input
+              placeholder="Ex: Ausente"
+              value={row.result}
+              onChange={(e) =>
+                updateRow(index, "result", e.target.value)
+              }
+            />
+
+            <Input
+              placeholder="Ex: Ausente em 100mL"
+              value={row.vmp}
+              onChange={(e) =>
+                updateRow(index, "vmp", e.target.value)
+              }
+            />
+
+            <Input
+              placeholder="Ex: SMEWW 9222 B"
+              value={row.method}
+              onChange={(e) =>
+                updateRow(index, "method", e.target.value)
+              }
+            />
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeRow(index)}
+            >
+              <Trash2 className="h-4 w-4 text-red-500" />
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      {/* Botão adicionar */}
+      <div className="pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addRow}
+        >
+          <Plus className="h-4 w-4 mr-2" />
           Adicionar Parâmetro
         </Button>
       </div>
 
-      {/* Atalhos (UX SaaS) */}
-      <div className="flex flex-wrap gap-2">
-        {SUGGESTED_PARAMETERS.map((p) => (
-          <Button
-            key={p}
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addRow({ parameter: p })}
-          >
-            + {p}
-          </Button>
-        ))}
-      </div>
-
-      {data.length === 0 && (
-        <div className="text-sm text-muted-foreground border rounded-md p-6 text-center">
-          Nenhum ensaio bacteriológico adicionado ainda.
-        </div>
-      )}
-
-      {data.map((row, index) => (
-        <div
-          key={index}
-          className="border rounded-md p-4 space-y-4 bg-muted/30"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Input
-              placeholder="Parâmetro (ex.: E. coli)"
-              value={row.parameter}
-              onChange={(e) => updateRow(index, "parameter", e.target.value)}
-            />
-
-            <Input
-              placeholder="Resultado (ex.: Ausente / Presente / < 1)"
-              value={row.result}
-              onChange={(e) => updateRow(index, "result", e.target.value)}
-            />
-
-            <Input
-              placeholder="Unidade (opcional)"
-              value={row.unit ?? ""}
-              onChange={(e) => updateRow(index, "unit", e.target.value)}
-            />
-
-            <Input
-              placeholder="Método (opcional)"
-              value={row.method ?? ""}
-              onChange={(e) => updateRow(index, "method", e.target.value)}
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => removeRow(index)}
-              className="text-red-600"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Remover
-            </Button>
-          </div>
-        </div>
-      ))}
     </div>
-  );
+  )
 }
