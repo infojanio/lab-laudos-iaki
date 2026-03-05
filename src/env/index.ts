@@ -7,7 +7,7 @@ const envSchema = z.object({
 const env = {
   VITE_API_URL: import.meta.env.VITE_API_URL,
 }
-
+console.log("ENV URL:", import.meta.env.VITE_API_URL)
 const parsed = envSchema.safeParse(env)
 
 if (!parsed.success) {
