@@ -1,5 +1,6 @@
+import env from "@/env"
 import axios from "axios"
-import { env } from "@/env"
+
 
 // Instância principal da API
 export const api = axios.create({
