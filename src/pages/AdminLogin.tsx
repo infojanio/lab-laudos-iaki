@@ -1,62 +1,107 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
-import { ShieldCheck, LogIn } from "lucide-react";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
+import { Helmet } from 'react-helmet-async'
+import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { z } from 'zod'
 
-const AdminLogin = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const { loginAdmin, isLoading } = useAuth();
-  const navigate = useNavigate();
+import { api } from '@/lib/axios'
+import { useAuth } from '@/contexts/AuthContext'
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    const success = await loginAdmin(email, password);
-    if (success) {
-      navigate("/admin");
-    } else {
-      setError("Credenciais inválidas.");
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+const signInForm = z.object({
+  email: z.string().email({ message: 'E-mail inválido' }),
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+})
+
+type SignInForm = z.infer<typeof signInForm>
+
+async function signInRequest(data: SignInForm) {
+  const response = await api.post('/sessions', data)
+  return response.data
+}
+
+export function AdminLogin() {
+  const navigate = useNavigate()
+  const { signIn } = useAuth()
+
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting, errors },
+  } = useForm<SignInForm>({
+    resolver: zodResolver(signInForm),
+  })
+
+  const { mutateAsync: authenticate } = useMutation({
+    mutationFn: signInRequest,
+  })
+
+  async function handleSignIn(data: SignInForm) {
+    try {
+      const response = await authenticate(data)
+
+      if (!response?.accessToken) {
+        toast.error('Token não retornado pela API.')
+        return
+      }
+
+      signIn({
+        user: response.user,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      })
+
+      toast.success(`Bem-vindo, ${response.user.name}!`)
+
+      setTimeout(() => navigate('/admin'), 100)
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Credenciais inválidas.')
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <SiteHeader />
-      <main className="flex-1 flex items-center justify-center py-12">
-        <Card className="w-full max-w-md mx-4">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-              <ShieldCheck className="h-7 w-7 text-primary" />
-            </div>
-            <CardTitle className="font-display text-xl">Administração</CardTitle>
-            <CardDescription>Acesso restrito ao laboratório.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              <Input type="password" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                <LogIn className="h-4 w-4 mr-2" />
-                {isLoading ? "Entrando..." : "Entrar"}
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                Teste: admin@labanalytica.com (qualquer senha)
-              </p>
-            </form>
-          </CardContent>
-        </Card>
-      </main>
-      <SiteFooter />
-    </div>
-  );
-};
+    <>
+      <Helmet title="Login Administrativo" />
 
-export default AdminLogin;
+      <div className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
+        <div className="w-[380px] rounded-xl border bg-background p-8 shadow-sm">
+          <div className="flex flex-col items-center gap-3 mb-6">
+            <img src="/logo.png" alt="logo" className="h-14" />
+            <p className="text-sm text-muted-foreground">
+              Painel Administrativo
+            </p>
+          </div>
+
+          <form className="space-y-4" onSubmit={handleSubmit(handleSignIn)}>
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <Input id="email" type="email" {...register('email')} />
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input id="password" type="password" {...register('password')} />
+              {errors.password && (
+                <p className="text-sm text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <Button disabled={isSubmitting} className="w-full" type="submit">
+              {isSubmitting ? 'Entrando...' : 'Entrar'}
+            </Button>
+          </form>
+        </div>
+      </div>
+    </>
+  )
+}

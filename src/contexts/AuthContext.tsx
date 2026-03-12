@@ -1,57 +1,90 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
-import { AuthState, User } from "@/types";
-import { authService } from "@/services/authService";
+import { createContext, useContext, useEffect, useState } from 'react'
 
-interface AuthContextType extends AuthState {
-  loginClient: (email: string) => Promise<boolean>;
-  loginAdmin: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+import { api } from '@/lib/axios'
+
+interface User {
+  id: string
+  name: string
+  email: string
+  role: 'ADMIN' | 'USER' | 'SUPER_ADMIN'
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+interface AuthContextType {
+  user: User | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  signOut: () => void
+  signIn: (data: {
+    user: User
+    accessToken: string
+    refreshToken: string
+  }) => void
+}
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AuthState>({
-    user: null,
-    isAuthenticated: false,
-    isLoading: false,
-  });
+const AuthContext = createContext({} as AuthContextType)
 
-  const loginClient = useCallback(async (email: string) => {
-    setState((s) => ({ ...s, isLoading: true }));
-    const user = await authService.loginClient(email);
-    if (user) {
-      setState({ user, isAuthenticated: true, isLoading: false });
-      return true;
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user')
+    const token = localStorage.getItem('token')
+
+    if (storedUser && token) {
+      try {
+        const parsedUser = JSON.parse(storedUser)
+        setUser(parsedUser)
+        api.defaults.headers.common.Authorization = `Bearer ${token}`
+      } catch (error) {
+        console.error('Erro ao recuperar usuário:', error)
+        signOut()
+      }
     }
-    setState((s) => ({ ...s, isLoading: false }));
-    return false;
-  }, []);
+  }, [])
 
-  const loginAdmin = useCallback(async (email: string, password: string) => {
-    setState((s) => ({ ...s, isLoading: true }));
-    const user = await authService.loginAdmin(email, password);
-    if (user) {
-      setState({ user, isAuthenticated: true, isLoading: false });
-      return true;
-    }
-    setState((s) => ({ ...s, isLoading: false }));
-    return false;
-  }, []);
+  function signOut() {
+    localStorage.clear()
+    setUser(null)
+    delete api.defaults.headers.common.Authorization
+    window.location.href = '/sign-in'
+  }
 
-  const logout = useCallback(() => {
-    setState({ user: null, isAuthenticated: false, isLoading: false });
-  }, []);
+  function signIn({
+    user,
+    accessToken,
+    refreshToken,
+  }: {
+    user: User
+    accessToken: string
+    refreshToken: string
+  }) {
+    localStorage.setItem('token', accessToken)
+    localStorage.setItem('token', refreshToken)
+    localStorage.setItem('user', JSON.stringify(user))
+    setUser(user)
+    api.defaults.headers.common.Authorization = `Bearer ${accessToken}`
+  }
 
   return (
-    <AuthContext.Provider value={{ ...state, loginClient, loginAdmin, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading: false,
+        signOut,
+        signIn,
+      }}
+    >
       {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
 
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
-};
+// ✅ Mantenha fora do componente, mas após a definição de AuthContext
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth deve ser usado dentro de AuthProvider')
+  }
+  return context
+}

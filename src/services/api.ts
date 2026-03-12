@@ -1,34 +1,33 @@
-import {env} from "@/env"
-import axios from "axios"
+import axios, { AxiosError } from 'axios'
 
-
-// Instância principal da API
 export const api = axios.create({
-  baseURL: env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL,
+  timeout: 10000,
 })
 
-// 👉 Se você usar autenticação JWT depois,
-// já deixamos preparado o interceptor:
-
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("labmoura_token")
+  const token = localStorage.getItem('@lablaudos:token')
 
-  if (token) {
+  if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`
   }
 
   return config
 })
 
-// 👉 Tratamento global de erro (opcional, mas recomendado)
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error: AxiosError) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("labmoura_token")
-      window.location.href = "/admin/login"
+      console.warn('Token inválido ou expirado')
+
+      localStorage.removeItem('@lablaudos:token')
+      localStorage.removeItem('@lablaudos:refreshToken')
+      localStorage.removeItem('@lablaudos:user')
+
+      window.location.href = '/admin/login'
     }
 
     return Promise.reject(error)
-  }
+  },
 )

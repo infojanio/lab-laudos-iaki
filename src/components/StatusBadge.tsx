@@ -1,19 +1,38 @@
-import { ReportStatus } from "@/types";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+type Props = {
+  status?: string
+}
 
-const statusConfig: Record<ReportStatus, { label: string; className: string }> = {
-  valido: { label: "Válido", className: "bg-success text-success-foreground" },
-  substituido: { label: "Substituído", className: "bg-warning text-warning-foreground" },
-  cancelado: { label: "Cancelado", className: "bg-destructive text-destructive-foreground" },
-  em_analise: { label: "Em Análise", className: "bg-info text-info-foreground" },
-};
+const STATUS_MAP: Record<string, { className: string; label: string }> = {
+  valido: {
+    className: 'bg-green-100 text-green-700',
+    label: 'Válido',
+  },
+  em_analise: {
+    className: 'bg-yellow-100 text-yellow-700',
+    label: 'Em análise',
+  },
+  cancelado: {
+    className: 'bg-red-100 text-red-700',
+    label: 'Cancelado',
+  },
+}
 
-export function StatusBadge({ status }: { status: ReportStatus }) {
-  const config = statusConfig[status];
+export function StatusBadge({ status }: Props) {
+  const config = STATUS_MAP[status ?? '']
+
+  if (!config) {
+    return (
+      <span className="px-2 py-1 rounded text-xs bg-gray-200 text-gray-600">
+        —
+      </span>
+    )
+  }
+
   return (
-    <Badge className={cn("font-medium", config.className)}>
+    <span
+      className={`px-2 py-1 rounded text-xs font-medium ${config.className}`}
+    >
       {config.label}
-    </Badge>
-  );
+    </span>
+  )
 }

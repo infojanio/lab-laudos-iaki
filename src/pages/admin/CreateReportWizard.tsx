@@ -1,188 +1,159 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ArrowLeft } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
-import StepReport from "@/components/report-wizard/StepReport"
-import StepClient from "@/components/report-wizard/StepClient"
-import StepSample from "@/components/report-wizard/StepSample"
-import StepPhysical from "@/components/report-wizard/StepPhysical"
-import StepMicrobiological from "@/components/report-wizard/StepMicrobiological"
-import StepReview from "@/components/report-wizard/StepReview"
-import StepObservations from "@/components/report-wizard/StepObservations"
+import { api } from '@/lib/axios'
 
-// ======================================================
-// STEPS
-// ======================================================
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
+
+import { ArrowLeft } from 'lucide-react'
+
+import StepReport from '@/components/report-wizard/StepReport'
+import StepClient from '@/components/report-wizard/StepClient'
+import StepSample from '@/components/report-wizard/StepSample'
+import StepPhysical from '@/components/report-wizard/StepPhysical'
+import StepMicrobiological from '@/components/report-wizard/StepMicrobiological'
+import StepReview from '@/components/report-wizard/StepReview'
+import StepObservations from '@/components/report-wizard/StepObservations'
 
 const steps = [
-  "Identificação do Laudo",
-  "Cliente",
-  "Amostragem",
-  "Físico-Químico",
-  "Bacteriológico",
-  "Observações",
-  "Revisão",
+  'Identificação',
+  'Cliente',
+  'Amostra',
+  'Físico-Químico',
+  'Bacteriológico',
+  'Observações',
+  'Revisão',
 ]
-
-// ======================================================
-// TIPOS
-// ======================================================
-
-export interface ResultRow {
-  parameter: string
-  analysisDate: string
-  result: string
-  vmp: string
-  method: string
-}
-
-export interface CreateReportWizardData {
-  report: {
-    reportNumber: string
-    issueDate: string
-    normativeReference: string
-  }
-
-  client: {
-    name: string
-    document: string
-    address: string
-    municipality: string
-    phone: string
-    email?: string
-  }
-
-  sample: {
-    identification: string
-    location: string
-    latitude: string
-    longitude: string
-    collectionDate: string
-    receivedDate: string
-    collectorName: string
-    weatherCondition: string
-    ambientTemperature: string
-  }
-
-  physicalAnalysis: ResultRow[]
-  bacteriologicalAnalysis: ResultRow[]
-
-  observations: {
-    useStandardText: boolean
-    customText?: string
-  }
-}
-
-// ======================================================
-// COMPONENT
-// ======================================================
 
 export default function CreateReportWizard() {
   const navigate = useNavigate()
+
   const [currentStep, setCurrentStep] = useState(0)
 
-  const [formData, setFormData] = useState<CreateReportWizardData>({
+  const [formData, setFormData] = useState<any>({
     report: {
-      reportNumber: "",
-      issueDate: "",
-      normativeReference: "RESOLUÇÃO CONAMA 357/05",
+      reportNumber: '',
+      issueDate: '',
+      normativeReference: 'RESOLUÇÃO CONAMA 357/05',
     },
-
-    client: {
-      name: "",
-      document: "",
-      address: "",
-      municipality: "",
-      phone: "",
-      email: "",
-    },
-
-    sample: {
-      identification: "",
-      location: "",
-      latitude: "",
-      longitude: "",
-      collectionDate: "",
-      receivedDate: "",
-      collectorName: "",
-      weatherCondition: "",
-      ambientTemperature: "",
-    },
-
+    client: {},
+    sample: {},
     physicalAnalysis: [],
     bacteriologicalAnalysis: [],
-
     observations: {
       useStandardText: true,
-      customText: "",
+      customText: '',
+    },
+  })
+
+  // ================= SUBMIT =================
+  const { mutateAsync: createReport, isPending } = useMutation({
+    mutationFn: async () => {
+      const results = [
+        ...formData.physicalAnalysis.map((r: any) => ({
+          section: 'FISICO_QUIMICO',
+          parameter: r.parameter ?? '',
+          result: Boolean(r.result),
+          unit: r.unit ?? '',
+          method: r.method ?? '',
+          vmp: r.vmp ?? '',
+        })),
+        ...formData.bacteriologicalAnalysis.map((r: any) => ({
+          section: 'MICROBIOLOGICO',
+          parameter: r.parameter ?? '',
+          result: Boolean(r.result),
+          unit: r.unit ?? '',
+          method: r.method ?? '',
+          vmp: r.vmp ?? '',
+        })),
+      ]
+
+      const payload = {
+        analysisType: 'AGUA',
+        identification: formData.sample.identification || '',
+        location: formData.sample.location || '',
+        collectionAgent: formData.sample.collectorName || '',
+        collectionTime: '',
+        sampleDate: formData.sample.collectionDate || undefined,
+        entryDate: formData.sample.receivedDate || undefined,
+        results,
+      }
+
+      console.log('REPORT PAYLOAD:', payload)
+
+      const response = await api.post('/reports', payload)
+      return response.data
     },
   })
 
   const next = () =>
     setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
 
-  const back = () =>
-    setCurrentStep((prev) => Math.max(prev - 1, 0))
+  const back = () => setCurrentStep((prev) => Math.max(prev - 1, 0))
+
+  const handleSubmit = async () => {
+    try {
+      await createReport()
+      toast.success('Laudo criado com sucesso!')
+      navigate('/admin')
+    } catch (error: any) {
+      console.error('CREATE REPORT ERROR:', error?.response?.data || error)
+      toast.error(error?.response?.data?.message || 'Erro ao criar relatório.')
+    }
+  }
+
+  const progress = ((currentStep + 1) / steps.length) * 100
 
   return (
     <div className="container max-w-5xl py-10">
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate("/admin")}
-        >
+      <div className="flex items-center justify-between mb-6">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/admin')}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
         </Button>
       </div>
 
-      <h1 className="text-3xl font-bold mb-6">
-        Criar Relatório de Ensaio
-      </h1>
+      <h1 className="text-3xl font-bold mb-6">Criar Relatório de Ensaio</h1>
+
+      <Progress value={progress} className="mb-6" />
 
       <Card className="p-8 space-y-6">
-
-        {/* STEP 1 - IDENTIFICAÇÃO DO LAUDO */}
         {currentStep === 0 && (
           <StepReport
             data={formData.report}
-            onChange={(report) =>
-              setFormData((prev) => ({ ...prev, report }))
+            onChange={(report: any) =>
+              setFormData((prev: any) => ({ ...prev, report }))
             }
           />
         )}
 
-        {/* STEP 2 - CLIENTE */}
         {currentStep === 1 && (
           <StepClient
             data={formData.client}
-            onChange={(client) =>
-              setFormData((prev) => ({ ...prev, client }))
+            onChange={(client: any) =>
+              setFormData((prev: any) => ({ ...prev, client }))
             }
           />
         )}
 
-        {/* STEP 3 - AMOSTRAGEM */}
         {currentStep === 2 && (
           <StepSample
             data={formData.sample}
-            onChange={(sample) =>
-              setFormData((prev) => ({ ...prev, sample }))
+            onChange={(sample: any) =>
+              setFormData((prev: any) => ({ ...prev, sample }))
             }
           />
         )}
 
-        {/* STEP 4 - FÍSICO-QUÍMICO */}
         {currentStep === 3 && (
           <StepPhysical
             data={formData.physicalAnalysis}
-            onChange={(physicalAnalysis) =>
-              setFormData((prev) => ({
+            onChange={(physicalAnalysis: any) =>
+              setFormData((prev: any) => ({
                 ...prev,
                 physicalAnalysis,
               }))
@@ -190,12 +161,11 @@ export default function CreateReportWizard() {
           />
         )}
 
-        {/* STEP 5 - BACTERIOLÓGICO */}
         {currentStep === 4 && (
           <StepMicrobiological
             data={formData.bacteriologicalAnalysis}
-            onChange={(bacteriologicalAnalysis) =>
-              setFormData((prev) => ({
+            onChange={(bacteriologicalAnalysis: any) =>
+              setFormData((prev: any) => ({
                 ...prev,
                 bacteriologicalAnalysis,
               }))
@@ -203,41 +173,31 @@ export default function CreateReportWizard() {
           />
         )}
 
-        {/* STEP 6 - OBSERVAÇÕES */}
         {currentStep === 5 && (
-  <StepObservations
-    data={formData.observations}
-    onChange={(observations) =>
-      setFormData((prev) => ({
-        ...prev,
-        observations,
-      }))
-    }
-  />
-)}
-
-        {/* STEP 7 - REVISÃO */}
-        {currentStep === 6 && (
-          <StepReview data={formData} />
+          <StepObservations
+            data={formData.observations}
+            onChange={(observations: any) =>
+              setFormData((prev: any) => ({
+                ...prev,
+                observations,
+              }))
+            }
+          />
         )}
 
-        {/* Navegação */}
+        {currentStep === 6 && <StepReview data={formData} />}
+
         <div className="flex justify-between pt-6">
-          <Button
-            variant="outline"
-            disabled={currentStep === 0}
-            onClick={back}
-          >
+          <Button variant="outline" disabled={currentStep === 0} onClick={back}>
             Voltar
           </Button>
 
-          <Button onClick={next}>
-            {currentStep === steps.length - 1
-              ? "Finalizar Relatório"
-              : "Próximo"}
-          </Button>
+          {currentStep === steps.length - 1 ? (
+            <Button onClick={handleSubmit}>Finalizar Relatório</Button>
+          ) : (
+            <Button onClick={next}>Próximo</Button>
+          )}
         </div>
-
       </Card>
     </div>
   )
