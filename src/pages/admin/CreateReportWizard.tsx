@@ -35,15 +35,19 @@ export default function CreateReportWizard() {
   const [currentStep, setCurrentStep] = useState(0)
 
   const [formData, setFormData] = useState<any>({
+    clientId: undefined,
+
     report: {
       reportNumber: '',
       issueDate: '',
       normativeReference: 'RESOLUÇÃO CONAMA 357/05',
     },
-    client: {},
+
     sample: {},
+
     physicalAnalysis: [],
     bacteriologicalAnalysis: [],
+
     observations: {
       useStandardText: true,
       customText: '',
@@ -51,21 +55,23 @@ export default function CreateReportWizard() {
   })
 
   // ================= SUBMIT =================
+
   const { mutateAsync: createReport, isPending } = useMutation({
     mutationFn: async () => {
       const results = [
         ...formData.physicalAnalysis.map((r: any) => ({
           section: 'FISICO_QUIMICO',
           parameter: r.parameter ?? '',
-          result: Boolean(r.result),
+          result: r.result ?? '',
           unit: r.unit ?? '',
           method: r.method ?? '',
           vmp: r.vmp ?? '',
         })),
+
         ...formData.bacteriologicalAnalysis.map((r: any) => ({
           section: 'MICROBIOLOGICO',
           parameter: r.parameter ?? '',
-          result: Boolean(r.result),
+          result: r.result ?? '',
           unit: r.unit ?? '',
           method: r.method ?? '',
           vmp: r.vmp ?? '',
@@ -73,19 +79,26 @@ export default function CreateReportWizard() {
       ]
 
       const payload = {
+        clientId: formData.clientId,
+
         analysisType: 'AGUA',
-        identification: formData.sample.identification || '',
-        location: formData.sample.location || '',
-        collectionAgent: formData.sample.collectorName || '',
+
+        identification: formData.sample.identification ?? '',
+        location: formData.sample.location ?? '',
+
+        collectionAgent: formData.sample.collectorName ?? '',
         collectionTime: '',
-        sampleDate: formData.sample.collectionDate || undefined,
-        entryDate: formData.sample.receivedDate || undefined,
+
+        sampleDate: formData.sample.collectionDate ?? undefined,
+        entryDate: formData.sample.receivedDate ?? undefined,
+
         results,
       }
 
       console.log('REPORT PAYLOAD:', payload)
 
       const response = await api.post('/reports', payload)
+
       return response.data
     },
   })
@@ -96,12 +109,21 @@ export default function CreateReportWizard() {
   const back = () => setCurrentStep((prev) => Math.max(prev - 1, 0))
 
   const handleSubmit = async () => {
+    if (!formData.clientId) {
+      toast.error('Selecione um cliente antes de finalizar.')
+      setCurrentStep(1)
+      return
+    }
+
     try {
       await createReport()
+
       toast.success('Laudo criado com sucesso!')
+
       navigate('/admin')
     } catch (error: any) {
       console.error('CREATE REPORT ERROR:', error?.response?.data || error)
+
       toast.error(error?.response?.data?.message || 'Erro ao criar relatório.')
     }
   }
@@ -133,9 +155,12 @@ export default function CreateReportWizard() {
 
         {currentStep === 1 && (
           <StepClient
-            data={formData.client}
+            data={{ clientId: formData.clientId }}
             onChange={(client: any) =>
-              setFormData((prev: any) => ({ ...prev, client }))
+              setFormData((prev: any) => ({
+                ...prev,
+                clientId: client.clientId,
+              }))
             }
           />
         )}
@@ -193,7 +218,9 @@ export default function CreateReportWizard() {
           </Button>
 
           {currentStep === steps.length - 1 ? (
-            <Button onClick={handleSubmit}>Finalizar Relatório</Button>
+            <Button onClick={handleSubmit} disabled={isPending}>
+              {isPending ? 'Salvando...' : 'Finalizar Relatório'}
+            </Button>
           ) : (
             <Button onClick={next}>Próximo</Button>
           )}

@@ -15,6 +15,14 @@ import NotFound from './pages/NotFound'
 import ReportPublic from './pages/ReportPublic'
 import CreateReport from './pages/admin/CreateReport'
 import CreateReportWizard from './pages/admin/CreateReportWizard'
+import ReportDetails from './pages/admin/ReportDetails'
+
+import ClientCreate from './pages/admin/ClientCreate'
+import ClientDetails from './pages/admin/ClientDetails'
+import ParametersList from './pages/admin/ParametersList'
+import ParameterCreate from './pages/admin/ParameterCreate'
+import ClientsList from './pages/admin/ClientList'
+import ClientEdit from './pages/admin/ClientEdit'
 
 const queryClient = new QueryClient()
 
@@ -31,8 +39,17 @@ const App = () => (
               <Route path="/validar" element={<ValidateReport />} />
               <Route path="/cliente/login" element={<ClientLogin />} />
               <Route path="/cliente" element={<ClientDashboard />} />
+              <Route path="/admin/clients" element={<ClientsList />} />
+              <Route path="/admin/clients/new" element={<ClientCreate />} />
+              <Route path="/admin/clients/:id" element={<ClientDetails />} />
+              <Route path="/admin/clients/:id/edit" element={<ClientEdit />} />
+              <Route path="/admin/parameters" element={<ParametersList />} />
+              <Route
+                path="/admin/parameters/new"
+                element={<ParameterCreate />}
+              />
               <Route path="/reports/:id" element={<ReportPublic />} />
-
+              <Route path="/admin/reports/:id" element={<ReportDetails />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/create" element={<CreateReport />} />

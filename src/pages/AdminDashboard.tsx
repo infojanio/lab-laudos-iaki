@@ -4,12 +4,11 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
 import { api } from '@/lib/axios'
 
-import { Report, Client, ANALYSIS_TYPE_LABELS } from '@/types'
+import { Report, ANALYSIS_TYPE_LABELS } from '@/types'
 
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { StatusBadge } from '@/components/StatusBadge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import {
@@ -24,48 +23,55 @@ import {
 import {
   FlaskConical,
   LogOut,
-  ExternalLink,
   Plus,
-  Users,
   FileText,
   Search,
+  MapPin,
+  TestTube2,
+  Users,
 } from 'lucide-react'
-
-import { toast } from 'sonner'
 
 const AdminDashboard = () => {
   const { signOut } = useAuth()
 
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['reports'],
+    queryKey: ['reports', 1],
     queryFn: async () => {
       const response = await api.get('/reports?page=1')
       return response.data.reports
     },
   })
 
-  const reports: Report[] = data ?? []
-
-  const clients: Client[] = Array.from(
-    new Map(
-      reports.filter((r) => r.client).map((r) => [r.client!.id, r.client]),
-    ).values(),
-  ) as Client[]
+  const reports: Report[] = (data ?? []).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )
 
   const filteredReports = useMemo(() => {
+    const searchTerm = search.toLowerCase()
+
     return reports.filter((r) => {
-      const matchSearch =
-        (r.code ?? '').toLowerCase().includes(search.toLowerCase()) ||
-        (r.client?.name ?? '').toLowerCase().includes(search.toLowerCase())
-
-      const matchStatus = statusFilter === 'all' || r.status === statusFilter
-
-      return matchSearch && matchStatus
+      return (
+        (r.code ?? '').toLowerCase().includes(searchTerm) ||
+        (r.identification ?? '').toLowerCase().includes(searchTerm) ||
+        (r.location ?? '').toLowerCase().includes(searchTerm) ||
+        (r.analysisType ?? '').toLowerCase().includes(searchTerm)
+      )
     })
-  }, [reports, search, statusFilter])
+  }, [reports, search])
+
+  const totalResults = useMemo(() => {
+    return reports.reduce((acc, report) => {
+      return acc + (report.results?.length ?? 0)
+    }, 0)
+  }, [reports])
+
+  const uniqueClients = useMemo(() => {
+    const set = new Set(reports.map((r) => r.clientId).filter(Boolean))
+
+    return set.size
+  }, [reports])
 
   const handleLogout = () => {
     signOut()
@@ -82,6 +88,7 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-muted/40">
       {/* HEADER */}
+
       <header className="sticky top-0 z-50 bg-white border-b">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
@@ -90,6 +97,18 @@ const AdminDashboard = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            <Link to="/admin/clients">
+              <Button variant="outline" size="sm">
+                Clientes
+              </Button>
+            </Link>
+
+            <Link to="/admin/parameters">
+              <Button variant="outline" size="sm">
+                Parâmetros
+              </Button>
+            </Link>
+
             <Link to="/">
               <Button variant="outline" size="sm">
                 Voltar ao site
@@ -105,23 +124,71 @@ const AdminDashboard = () => {
       </header>
 
       <main className="container py-8 space-y-6">
+        {/* CARDS DE MÉTRICAS */}
+
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total de laudos</p>
+                <p className="text-2xl font-bold">{reports.length}</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <TestTube2 className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Resultados lançados
+                </p>
+                <p className="text-2xl font-bold">{totalResults}</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <MapPin className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Com localização</p>
+                <p className="text-2xl font-bold">
+                  {reports.filter((r) => !!r.location).length}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <Users className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Clientes atendidos
+                </p>
+                <p className="text-2xl font-bold">{uniqueClients}</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* TABS */}
+
         <Tabs defaultValue="reports">
           <TabsList>
             <TabsTrigger value="reports">
               <FileText className="h-4 w-4 mr-1" />
-              Laudos
-            </TabsTrigger>
-
-            <TabsTrigger value="clients">
-              <Users className="h-4 w-4 mr-1" />
-              Clientes
+              Relatórios de ensaio
             </TabsTrigger>
           </TabsList>
 
-          {/* LAUDOS */}
           <TabsContent value="reports" className="space-y-6">
+            {/* HEADER DA LISTA */}
+
             <div className="flex justify-between items-center border-b pb-3">
-              <h2 className="text-lg font-semibold">Laudos</h2>
+              <h2 className="text-lg font-semibold">Relatórios cadastrados</h2>
 
               <div className="flex gap-3">
                 <Link to="/admin/reports/new-upload">
@@ -140,16 +207,21 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <Card className="p-4 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+            {/* BUSCA */}
+
+            <Card className="p-4">
               <div className="flex items-center gap-2 w-full md:w-1/3">
                 <Search className="h-4 w-4 text-muted-foreground" />
+
                 <Input
-                  placeholder="Buscar por código ou cliente..."
+                  placeholder="Buscar por código, identificação, local ou tipo..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
             </Card>
+
+            {/* TABELA */}
 
             <Card>
               <div className="overflow-x-auto">
@@ -157,45 +229,60 @@ const AdminDashboard = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Código</TableHead>
-                      <TableHead>Cliente</TableHead>
                       <TableHead>Tipo</TableHead>
-                      <TableHead>Emissão</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>PDF</TableHead>
+                      <TableHead>Identificação</TableHead>
+                      <TableHead>Local</TableHead>
+                      <TableHead>Resultados</TableHead>
+                      <TableHead>Cadastro</TableHead>
                     </TableRow>
                   </TableHeader>
 
                   <TableBody>
-                    {filteredReports.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell>{r.code}</TableCell>
-                        <TableCell>{r.client?.name ?? '—'}</TableCell>
-                        <TableCell>
-                          {ANALYSIS_TYPE_LABELS[r.analysisType]}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(r.issueDate).toLocaleDateString('pt-BR')}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={r.status} />
-                        </TableCell>
-                        <TableCell>
-                          {r.signedPdfUrl ? (
-                            <a
-                              href={r.signedPdfUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
+                    {filteredReports.length > 0 ? (
+                      filteredReports.map((r) => (
+                        <TableRow key={r.id}>
+                          <TableCell className="font-medium">
+                            <Link
+                              to={`/admin/reports/${r.id}`}
+                              className="text-primary hover:underline"
                             >
-                              Abrir
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          ) : (
-                            '—'
-                          )}
+                              {r.code ?? '—'}
+                            </Link>
+                          </TableCell>
+
+                          <TableCell>
+                            {ANALYSIS_TYPE_LABELS?.[
+                              r.analysisType as keyof typeof ANALYSIS_TYPE_LABELS
+                            ] ??
+                              r.analysisType ??
+                              '—'}
+                          </TableCell>
+
+                          <TableCell>{r.identification ?? '—'}</TableCell>
+
+                          <TableCell>{r.location ?? '—'}</TableCell>
+
+                          <TableCell>{r.results?.length ?? 0}</TableCell>
+
+                          <TableCell>
+                            {r.createdAt
+                              ? new Date(r.createdAt).toLocaleDateString(
+                                  'pt-BR',
+                                )
+                              : '—'}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-8 text-muted-foreground"
+                        >
+                          Nenhum relatório encontrado.
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>
