@@ -1,75 +1,95 @@
-import { useQuery } from '@tanstack/react-query'
-import { parameterService } from '@/services/parameterService'
 import { Link } from 'react-router-dom'
-
-import { Card } from '@/components/ui/card'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ParameterDeleteDialog } from '@/modules/parameters/components/ParameterDeleteDialog'
+import { useDeleteParameter } from '@/modules/parameters/hooks/useDeleteParameter'
+import { useParameters } from '@/modules/parameters/hooks/useParameters'
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+export function ParametersList() {
+  const { data: parameters, isLoading } = useParameters()
+  const { mutateAsync: deleteParameter, isPending: isDeleting } =
+    useDeleteParameter()
 
-import { Plus } from 'lucide-react'
-
-export default function ParametersList() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['parameters'],
-    queryFn: parameterService.getParameters,
-  })
-
-  const parameters = data ?? []
-
-  if (isLoading) {
-    return <div className="p-10 text-center">Carregando parâmetros...</div>
+  async function handleDelete(id: string) {
+    try {
+      await deleteParameter(id)
+      toast.success('Parâmetro excluído com sucesso.')
+    } catch {
+      toast.error('Erro ao excluir parâmetro.')
+    }
   }
 
   return (
-    <div className="container py-10 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Biblioteca de Parâmetros</h1>
-
-        <Link to="/admin/parameters/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-1" />
-            Novo parâmetro
-          </Button>
-        </Link>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Parâmetros</h1>
+        <Button asChild>
+          <Link to="/parameters/new">Novo parâmetro</Link>
+        </Button>
       </div>
 
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Parâmetro</TableHead>
-              <TableHead>Seção</TableHead>
-              <TableHead>Método</TableHead>
-              <TableHead>VMP</TableHead>
-            </TableRow>
-          </TableHeader>
+        <CardHeader>
+          <CardTitle>Biblioteca de parâmetros</CardTitle>
+        </CardHeader>
 
-          <TableBody>
-            {parameters.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>{p.name}</TableCell>
+        <CardContent>
+          {isLoading ? (
+            <p>Carregando...</p>
+          ) : !parameters?.length ? (
+            <p>Nenhum parâmetro cadastrado.</p>
+          ) : (
+            <div className="space-y-4">
+              {parameters.map((parameter) => (
+                <div
+                  key={parameter.id}
+                  className="flex items-center justify-between rounded-xl border p-4"
+                >
+                  <div className="space-y-1">
+                    <p className="font-medium">{parameter.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Seção:{' '}
+                      {parameter.section === 'FISICO_QUIMICO'
+                        ? 'Físico-químico'
+                        : 'Microbiológico'}
+                    </p>
+                    {parameter.unit && (
+                      <p className="text-sm text-muted-foreground">
+                        Unidade: {parameter.unit}
+                      </p>
+                    )}
+                    {parameter.method && (
+                      <p className="text-sm text-muted-foreground">
+                        Método: {parameter.method}
+                      </p>
+                    )}
+                    {parameter.vmp && (
+                      <p className="text-sm text-muted-foreground">
+                        VMP: {parameter.vmp}
+                      </p>
+                    )}
+                  </div>
 
-                <TableCell>
-                  {p.section === 'FISICO_QUIMICO'
-                    ? 'Físico-químico'
-                    : 'Microbiológico'}
-                </TableCell>
+                  <div className="flex gap-2">
+                    <Button variant="outline" asChild>
+                      <Link to={`/parameters/${parameter.id}/edit`}>
+                        Editar
+                      </Link>
+                    </Button>
 
-                <TableCell>{p.method ?? '—'}</TableCell>
-
-                <TableCell>{p.vmp ?? '—'}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                    <ParameterDeleteDialog
+                      isLoading={isDeleting}
+                      onConfirm={() => handleDelete(parameter.id)}
+                    >
+                      <Button variant="destructive">Excluir</Button>
+                    </ParameterDeleteDialog>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
       </Card>
     </div>
   )

@@ -1,14 +1,41 @@
 import { api } from '@/lib/axios'
-import { Parameter } from '@/types/parameter'
+import {
+  CreateParameterDTO,
+  Parameter,
+  ReportSection,
+  UpdateParameterDTO,
+} from '@/types/parameter'
+
+interface ListParametersParams {
+  section?: ReportSection
+  search?: string
+}
 
 export const parameterService = {
-  async getParameters(): Promise<Parameter[]> {
-    const res = await api.get('/parameters')
-    return res.data.parameters
+  async list(params?: ListParametersParams): Promise<Parameter[]> {
+    const response = await api.get('/parameters', {
+      params,
+    })
+
+    return response.data.parameters
   },
 
-  async createParameter(data: Partial<Parameter>): Promise<Parameter> {
-    const res = await api.post('/parameters', data)
-    return res.data.parameter
+  async getById(id: string): Promise<Parameter> {
+    const response = await api.get(`/parameters/${id}`)
+    return response.data.parameter
+  },
+
+  async create(data: CreateParameterDTO): Promise<Parameter> {
+    const response = await api.post('/parameters', data)
+    return response.data.parameter
+  },
+
+  async update(id: string, data: UpdateParameterDTO): Promise<Parameter> {
+    const response = await api.put(`/parameters/${id}`, data)
+    return response.data.parameter
+  },
+
+  async delete(id: string): Promise<void> {
+    await api.delete(`/parameters/${id}`)
   },
 }

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { api } from '@/lib/axios'
 
@@ -24,29 +25,41 @@ interface AuthContextType {
 const AuthContext = createContext({} as AuthContextType)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate()
+
   const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user')
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('accessToken')
 
     if (storedUser && token) {
       try {
         const parsedUser = JSON.parse(storedUser)
+
         setUser(parsedUser)
+
         api.defaults.headers.common.Authorization = `Bearer ${token}`
       } catch (error) {
         console.error('Erro ao recuperar usuário:', error)
         signOut()
       }
     }
+
+    setIsLoading(false)
   }, [])
 
   function signOut() {
-    localStorage.clear()
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('user')
+
     setUser(null)
+
     delete api.defaults.headers.common.Authorization
-    window.location.href = '/sign-in'
+
+    navigate('/admin/login')
   }
 
   function signIn({
@@ -58,11 +71,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     accessToken: string
     refreshToken: string
   }) {
-    localStorage.setItem('token', accessToken)
-    localStorage.setItem('token', refreshToken)
+    localStorage.setItem('accessToken', accessToken)
+    localStorage.setItem('refreshToken', refreshToken)
     localStorage.setItem('user', JSON.stringify(user))
+
     setUser(user)
+
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`
+
+    // 🔹 redirecionamento automático por role
+    if (user.role === 'SUPER_ADMIN') {
+      navigate('/admin')
+      return
+    }
+
+    if (user.role === 'ADMIN') {
+      navigate('/lab')
+      return
+    }
+
+    navigate('/')
   }
 
   return (
@@ -70,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
-        isLoading: false,
+        isLoading,
         signOut,
         signIn,
       }}
@@ -80,11 +108,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-// ✅ Mantenha fora do componente, mas após a definição de AuthContext
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (context === undefined) {
+
+  if (!context) {
     throw new Error('useAuth deve ser usado dentro de AuthProvider')
   }
+
   return context
 }
